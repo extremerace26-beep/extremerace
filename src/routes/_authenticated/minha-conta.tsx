@@ -223,7 +223,7 @@ function MinhaContaPage() {
                     </button>
                     {r.payment_status === "pending" && (
                       <Link
-                        to="/checkout"
+                        to={`/checkout?registrationId=${encodeURIComponent(r.id)}`}
                         className="bg-brand text-brand-foreground px-5 py-2.5 text-[10px] font-bold uppercase tracking-widest hover:brightness-110 transition-all"
                       >
                         Concluir pagamento →

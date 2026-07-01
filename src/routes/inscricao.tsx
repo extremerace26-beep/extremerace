@@ -2,7 +2,9 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { z } from "zod";
 
-type CategoryId = "elite" | "open" | "equipes";
+type CategoryId = "elite";
+
+const FIRST_LOT_CHECKOUT_URL = "https://mpago.la/24Jq5Mk";
 
 const CATEGORIES: Record<CategoryId, {
   id: CategoryId;
@@ -18,29 +20,11 @@ const CATEGORIES: Record<CategoryId, {
     id: "elite",
     badge: "Competitivo",
     name: "Elite",
-    price: 249,
-    priceLabel: "R$ 249",
+    price: 119.99,
+    priceLabel: "Lote 1 • R$ 119,99",
     description: "Para atletas que disputam o pódio.",
     features: ["Largada 07:00", "Premiação Top 5", "Chip de cronometragem"],
     highlight: true,
-  },
-  open: {
-    id: "open",
-    badge: "Superação",
-    name: "Open",
-    price: 189,
-    priceLabel: "R$ 189",
-    description: "Para quem corre contra si mesmo.",
-    features: ["Largadas em ondas", "Medalha finisher", "Foto profissional"],
-  },
-  equipes: {
-    id: "equipes",
-    badge: "Comunidade",
-    name: "Equipes",
-    price: 159,
-    priceLabel: "R$ 159 /atleta",
-    description: "Mínimo 5 pessoas. Box, empresa ou amigos.",
-    features: ["Tenda exclusiva", "Desconto progressivo", "Ranking de equipe"],
   },
 };
 
@@ -71,6 +55,7 @@ const athleteSchema = z.object({
   gender: z.enum(["M", "F", "O"], { message: "Selecione" }),
   email: z.string().trim().email("E-mail inválido").max(255),
   phone: z.string().trim().min(10, "Telefone inválido").max(20),
+  password: z.string().trim().min(6, "Senha mínima 6 caracteres"),
   emergencyName: z.string().trim().min(3, "Informe o contato de emergência").max(120),
   emergencyPhone: z.string().trim().min(10, "Telefone inválido").max(20),
   shirtSize: z.enum(["PP", "P", "M", "G", "GG", "XGG"], { message: "Selecione" }),
@@ -89,6 +74,8 @@ function InscricaoPage() {
   const [selected, setSelected] = useState<CategoryId | null>(categoria ?? null);
   const [form, setForm] = useState<Partial<AthleteData>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
 
   const cat = selected ? CATEGORIES[selected] : null;
 
@@ -121,13 +108,34 @@ function InscricaoPage() {
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function handleGoToCheckout() {
+  async function handleGoToCheckout() {
     if (!cat || !form) return;
-    const payload = { category: cat, athlete: form, createdAt: new Date().toISOString() };
-    if (typeof window !== "undefined") {
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    setIsSubmitting(true);
+    setPaymentError(null);
+
+    try {
+      const payload = {
+        category: cat,
+        athlete: form,
+        createdAt: new Date().toISOString(),
+      };
+
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+
+        if (cat.id === "elite") {
+          window.location.assign(FIRST_LOT_CHECKOUT_URL);
+          return;
+        }
+
+        navigate({ to: "/checkout", search: { status: "success" } });
+      }
+    } catch (error) {
+      console.error("[Checkout] preference creation failed", error);
+      setPaymentError(error instanceof Error ? error.message : "Erro ao iniciar o pagamento.");
+    } finally {
+      setIsSubmitting(false);
     }
-    navigate({ to: "/checkout" });
   }
 
   return (
@@ -297,6 +305,16 @@ function InscricaoPage() {
                     autoComplete="email"
                   />
                 </Field>
+                <Field label="Senha" error={errors.password}>
+                  <input
+                    type="password"
+                    value={form.password ?? ""}
+                    onChange={(e) => set("password", e.target.value)}
+                    className={inputCls}
+                    autoComplete="new-password"
+                    minLength={6}
+                  />
+                </Field>
                 <Field label="Telefone (WhatsApp)" error={errors.phone}>
                   <input
                     type="tel"
@@ -418,7 +436,9 @@ function InscricaoPage() {
               </dl>
             </div>
 
-            <div className="flex flex-col-reverse sm:flex-row gap-4">
+            {paymentError && <p className="text-destructive text-xs font-mono mt-4">{paymentError}</p>}
+
+            <div className="flex flex-col-reverse sm:flex-row gap-4 mt-6">
               <button
                 onClick={() => setStep(2)}
                 className="px-8 py-4 text-xs font-black uppercase tracking-widest border border-border hover:bg-foreground hover:text-background transition-all cursor-pointer"
@@ -427,9 +447,14 @@ function InscricaoPage() {
               </button>
               <button
                 onClick={handleGoToCheckout}
-                className="flex-1 py-4 text-xs font-black uppercase tracking-widest bg-brand text-brand-foreground hover:brightness-110 transition-all cursor-pointer"
+                disabled={isSubmitting}
+                className="flex-1 py-4 text-xs font-black uppercase tracking-widest bg-brand text-brand-foreground hover:brightness-110 transition-all cursor-pointer disabled:opacity-60"
               >
-                Ir para pagamento →
+                {isSubmitting
+                  ? "Processando..."
+                  : cat.id === "elite"
+                    ? "Ir para pagamento →"
+                    : "Confirmar inscrição →"}
               </button>
             </div>
           </section>

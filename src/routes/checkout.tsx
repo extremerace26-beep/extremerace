@@ -1,12 +1,14 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { createWalletBrick, startCheckout } from "@/lib/mercadopago";
 
 type Payload = {
   category: { id: string; name: string; price: number; priceLabel: string };
   athlete: {
     fullName?: string;
     email?: string;
+    password?: string;
     cpf?: string;
     phone?: string;
     teamName?: string;
@@ -17,6 +19,7 @@ type Payload = {
     emergencyPhone?: string;
   };
   createdAt: string;
+  registrationId?: string;
 };
 
 const STORAGE_KEY = "extreme-race:inscricao";
@@ -35,78 +38,155 @@ export const Route = createFileRoute("/checkout")({
 function CheckoutPage() {
   const navigate = useNavigate();
   const [data, setData] = useState<Payload | null>(null);
-  const [method, setMethod] = useState<"pix" | "card">("pix");
   const [processing, setProcessing] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
+  const [walletCreated, setWalletCreated] = useState(false);
 
   useEffect(() => {
     const raw = sessionStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      navigate({ to: "/inscricao" });
-      return;
+    const params = new URLSearchParams(window.location.search);
+    const currentStatus = params.get("status");
+    const registrationId = params.get("registrationId");
+
+    if (currentStatus) {
+      setPaymentStatus(currentStatus);
+      setDone(currentStatus === "success");
     }
-    try {
-      setData(JSON.parse(raw) as Payload);
-    } catch {
-      navigate({ to: "/inscricao" });
-      return;
-    }
-    supabase.auth.getSession().then(({ data: s }) => {
-      if (!s.session) {
-        navigate({ to: "/auth", search: { redirect: "/checkout" } });
-      } else {
-        setAuthChecked(true);
+
+    if (raw) {
+      try {
+        setData(JSON.parse(raw) as Payload);
+      } catch {
+        sessionStorage.removeItem(STORAGE_KEY);
       }
-    });
+    }
+
+    if (!raw && !registrationId) {
+      navigate({ to: "/inscricao" });
+      return;
+    }
+
+    (async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const user = sessionData.session?.user;
+      setIsAuthenticated(!!user);
+
+      if (!user && !registrationId && !raw) {
+        navigate({ to: "/auth", search: { redirect: "/checkout" } });
+        return;
+      }
+
+      if (registrationId) {
+        const query = supabase.from("registrations").select("*").eq("id", registrationId);
+        if (user) {
+          query.eq("user_id", user.id);
+        }
+
+        const { data: registration, error: registrationError } = await query.maybeSingle();
+
+        if (registrationError || !registration) {
+          navigate({ to: "/inscricao" });
+          return;
+        }
+
+        setData({
+          category: {
+            id: registration.category_id,
+            name: registration.category_name,
+            price: (registration.price_cents || 0) / 100,
+            priceLabel: `R$ ${((registration.price_cents || 0) / 100).toFixed(2)}`,
+          },
+          athlete: (registration.athlete_snapshot as Payload["athlete"]) || {},
+          createdAt: registration.created_at || new Date().toISOString(),
+          registrationId: registration.id,
+        });
+      }
+
+      setAuthChecked(true);
+    })();
   }, [navigate]);
 
   async function handlePay() {
     if (!data) return;
     setProcessing(true);
     setError(null);
+
     const { data: userRes } = await supabase.auth.getUser();
-    const user = userRes.user;
-    if (!user) {
-      navigate({ to: "/auth", search: { redirect: "/checkout" } });
-      return;
+    let user = userRes.user;
+
+    try {
+      if (!user) {
+        if (!data.athlete.password) {
+          setError("Informe uma senha para criar sua conta e continuar.");
+          setProcessing(false);
+          return;
+        }
+
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+          email: data.athlete.email || "",
+          password: data.athlete.password,
+          options: {
+            data: {
+              full_name: data.athlete.fullName,
+            },
+          },
+        });
+
+        if (signUpError) {
+          if (signUpError.message.toLowerCase().includes("already exists")) {
+            const { error: signInError } = await supabase.auth.signInWithPassword({
+              email: data.athlete.email || "",
+              password: data.athlete.password,
+            });
+            if (signInError) throw signInError;
+            const { data: newSessionData } = await supabase.auth.getSession();
+            user = newSessionData.session?.user ?? null;
+          } else {
+            throw signUpError;
+          }
+        } else {
+          user = signUpData.user ?? null;
+        }
+
+        if (!user) {
+          const { data: sessionData } = await supabase.auth.getSession();
+          user = sessionData.session?.user ?? null;
+        }
+
+        if (!user) {
+          setError(
+            "Cadastro criado. Verifique seu e-mail e faça login antes de continuar para o pagamento.",
+          );
+          setProcessing(false);
+          return;
+        }
+      }
+
+      const response = await startCheckout({
+        title: `Inscrição Extreme Race - ${data.category.name}`,
+        quantity: 1,
+        currency_id: "BRL",
+        unit_price: data.category.price,
+      });
+
+      if (response.preferenceId) {
+        await createWalletBrick(response.preferenceId);
+        setWalletCreated(true);
+      } else if (response.init_point) {
+        window.location.assign(response.init_point);
+      } else {
+        throw new Error("Resposta inválida do checkout do Mercado Pago");
+      }
+    } catch (error) {
+      console.error("[Checkout] preference creation failed", error);
+      setError(error instanceof Error ? error.message : "Erro ao iniciar o pagamento.");
+    } finally {
+      setProcessing(false);
     }
-
-    // Update profile snapshot from the form too
-    await supabase
-      .from("profiles")
-      .update({
-        full_name: data.athlete.fullName,
-        cpf: data.athlete.cpf,
-        phone: data.athlete.phone,
-        birth_date: data.athlete.birthDate || null,
-        gender: data.athlete.gender,
-        shirt_size: data.athlete.shirtSize,
-        emergency_name: data.athlete.emergencyName,
-        emergency_phone: data.athlete.emergencyPhone,
-      })
-      .eq("id", user.id);
-
-    const { error: insertError } = await supabase.from("registrations").insert({
-      user_id: user.id,
-      category_id: data.category.id,
-      category_name: data.category.name,
-      price_cents: Math.round(data.category.price * 100),
-      team_name: data.athlete.teamName || null,
-      athlete_snapshot: data.athlete,
-      payment_status: "paid",
-      payment_method: method,
-      paid_at: new Date().toISOString(),
-    });
-
-    setProcessing(false);
-    if (insertError) {
-      setError(insertError.message);
-      return;
-    }
-    sessionStorage.removeItem(STORAGE_KEY);
-    setDone(true);
   }
 
   if (!data || !authChecked) {
@@ -118,24 +198,27 @@ function CheckoutPage() {
   }
 
   if (done) {
+    setTimeout(() => {
+      navigate({ to: "/auth", search: { mode: "signin" } });
+    }, 2000);
+    
     return (
       <div className="min-h-screen bg-background text-foreground grid place-items-center px-6">
         <div className="max-w-xl text-center">
-          <span className="text-brand font-mono text-xs tracking-[0.3em] uppercase">[ Confirmado ]</span>
+          <span className="text-brand font-mono text-xs tracking-[0.3em] uppercase">[ Pagamento Confirmado ]</span>
           <h1 className="font-display text-5xl md:text-7xl font-black uppercase tracking-tighter mt-4">
-            Você está <span className="text-brand italic">dentro</span>
+            Tudo certo <span className="text-brand italic">!</span>
           </h1>
           <p className="text-muted-foreground mt-6">
-            Inscrição confirmada para <b className="text-foreground">{data.athlete.fullName}</b> na
-            categoria <b className="text-foreground">{data.category.name}</b>. Acesse sua área para
-            baixar o comprovante.
+            Seu pagamento foi confirmado. Você será redirecionado para fazer login em alguns segundos...
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center mt-10">
             <Link
-              to="/minha-conta"
+              to="/auth"
+              search={{ mode: "signin" }}
               className="px-8 py-4 text-xs font-black uppercase tracking-widest bg-brand text-brand-foreground hover:brightness-110 transition-all"
             >
-              Ir para minha conta →
+              Ir para login →
             </Link>
             <Link
               to="/"
@@ -172,33 +255,20 @@ function CheckoutPage() {
             Finalize sua <span className="text-brand italic">vaga</span>
           </h1>
 
-          <div className="space-y-4 mb-10">
-            <MethodOption
-              id="pix"
-              active={method === "pix"}
-              onClick={() => setMethod("pix")}
-              title="Pix"
-              desc="Aprovação imediata. Recomendado."
-            />
-            <MethodOption
-              id="card"
-              active={method === "card"}
-              onClick={() => setMethod("card")}
-              title="Cartão de crédito"
-              desc="Parcele em até 6x sem juros."
-            />
-          </div>
-
           <div className="border border-border p-6 bg-background/50">
             <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-muted-foreground mb-3">
               Processamento seguro
             </p>
             <p className="text-sm text-muted-foreground">
-              {method === "pix"
-                ? "Ao confirmar, geraremos o QR Code do Pix. A inscrição é validada assim que o pagamento for compensado."
-                : "Você será redirecionado para o checkout seguro do InfinityPay para inserir os dados do cartão."}
+              O pagamento será realizado diretamente no ambiente do Mercado Pago para garantir mais segurança e variedade de meios de pagamento.
             </p>
           </div>
+
+          {paymentStatus && (
+            <div className="mt-4 rounded border border-border p-4 text-sm text-muted-foreground">
+              Status do pagamento: <span className="font-semibold text-foreground">{paymentStatus}</span>
+            </div>
+          )}
 
           {error && <p className="text-destructive text-xs font-mono mt-4">{error}</p>}
 
@@ -207,10 +277,13 @@ function CheckoutPage() {
             disabled={processing}
             className="w-full mt-8 py-5 text-xs font-black uppercase tracking-widest bg-brand text-brand-foreground hover:brightness-110 transition-all disabled:opacity-60 cursor-pointer"
           >
-            {processing ? "Processando..." : `Pagar ${data.category.priceLabel}`}
+            {processing ? "Processando..." : `Continuar para o pagamento`}
           </button>
+          {walletCreated && (
+            <div id="wallet_container" className="mt-8" />
+          )}
           <p className="text-center text-[10px] font-mono tracking-[0.2em] uppercase text-muted-foreground mt-4">
-            Integração InfinityPay
+            Integração Mercado Pago Checkout Pro
           </p>
         </section>
 

@@ -50,29 +50,10 @@ const categories = [
     slug: "elite" as const,
     badge: "Competitivo",
     name: "Elite",
-    price: "R$ 249",
+    price: "Lote 1 • R$ 119,99",
     description: "Para atletas que disputam o pódio.",
     features: ["Largada exclusiva às 07:00", "Premiação em dinheiro Top 5", "Cronometragem com chip", "Penalidades rigorosas por obstáculo"],
     highlight: true,
-  },
-  {
-    slug: "open" as const,
-    badge: "Superação",
-    name: "Open",
-    price: "R$ 189",
-    description: "Para quem corre contra si mesmo.",
-    features: ["Largadas em ondas a partir das 08:00", "Auxílio entre atletas permitido", "Medalha finisher garantida", "Foto profissional inclusa"],
-    highlight: false,
-  },
-  {
-    slug: "equipes" as const,
-    badge: "Comunidade",
-    name: "Equipes",
-    price: "R$ 159",
-    priceSuffix: "/atleta",
-    description: "Mínimo 5 pessoas. Box, empresa ou amigos.",
-    features: ["Tenda exclusiva da equipe", "Desconto progressivo", "Ranking de equipe", "Kit em lote único"],
-    highlight: false,
   },
 ];
 
@@ -286,19 +267,14 @@ function ExtremeRace() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-1 gap-6 justify-items-center">
             {categories.map((cat) => (
               <div
                 key={cat.name}
-                className={`relative p-10 border bg-background flex flex-col ${
-                  cat.highlight ? "border-brand md:scale-105" : "border-border"
+                className={`relative p-10 border bg-background flex flex-col w-full md:w-96 ${
+                  cat.highlight ? "border-brand" : "border-border"
                 }`}
               >
-                {cat.highlight && (
-                  <div className="absolute -top-3 left-10 bg-brand text-brand-foreground px-3 py-1 text-[10px] font-black tracking-widest uppercase">
-                    Mais disputada
-                  </div>
-                )}
                 <span
                   className={`font-mono text-[10px] tracking-[0.3em] uppercase font-bold ${
                     cat.highlight ? "text-brand" : "text-muted-foreground"

@@ -19,6 +19,7 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as ApiPublicSetupAdminRouteImport } from './routes/api/public/setup-admin'
 import { Route as ApiPublicSeedTestUserRouteImport } from './routes/api/public/seed-test-user'
 import { Route as ApiPublicSeedAdminPasswordRouteImport } from './routes/api/public/seed-admin-password'
+import { Route as ApiPublicCreatePreferenceRouteImport } from './routes/api/public/create-preference'
 
 const InscricaoRoute = InscricaoRouteImport.update({
   id: '/inscricao',
@@ -70,6 +71,12 @@ const ApiPublicSeedAdminPasswordRoute =
     path: '/api/public/seed-admin-password',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCreatePreferenceRoute =
+  ApiPublicCreatePreferenceRouteImport.update({
+    id: '/api/public/create-preference',
+    path: '/api/public/create-preference',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -78,6 +85,7 @@ export interface FileRoutesByFullPath {
   '/inscricao': typeof InscricaoRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/minha-conta': typeof AuthenticatedMinhaContaRoute
+  '/api/public/create-preference': typeof ApiPublicCreatePreferenceRoute
   '/api/public/seed-admin-password': typeof ApiPublicSeedAdminPasswordRoute
   '/api/public/seed-test-user': typeof ApiPublicSeedTestUserRoute
   '/api/public/setup-admin': typeof ApiPublicSetupAdminRoute
@@ -89,6 +97,7 @@ export interface FileRoutesByTo {
   '/inscricao': typeof InscricaoRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/minha-conta': typeof AuthenticatedMinhaContaRoute
+  '/api/public/create-preference': typeof ApiPublicCreatePreferenceRoute
   '/api/public/seed-admin-password': typeof ApiPublicSeedAdminPasswordRoute
   '/api/public/seed-test-user': typeof ApiPublicSeedTestUserRoute
   '/api/public/setup-admin': typeof ApiPublicSetupAdminRoute
@@ -102,6 +111,7 @@ export interface FileRoutesById {
   '/inscricao': typeof InscricaoRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/minha-conta': typeof AuthenticatedMinhaContaRoute
+  '/api/public/create-preference': typeof ApiPublicCreatePreferenceRoute
   '/api/public/seed-admin-password': typeof ApiPublicSeedAdminPasswordRoute
   '/api/public/seed-test-user': typeof ApiPublicSeedTestUserRoute
   '/api/public/setup-admin': typeof ApiPublicSetupAdminRoute
@@ -115,6 +125,7 @@ export interface FileRouteTypes {
     | '/inscricao'
     | '/admin'
     | '/minha-conta'
+    | '/api/public/create-preference'
     | '/api/public/seed-admin-password'
     | '/api/public/seed-test-user'
     | '/api/public/setup-admin'
@@ -126,6 +137,7 @@ export interface FileRouteTypes {
     | '/inscricao'
     | '/admin'
     | '/minha-conta'
+    | '/api/public/create-preference'
     | '/api/public/seed-admin-password'
     | '/api/public/seed-test-user'
     | '/api/public/setup-admin'
@@ -138,6 +150,7 @@ export interface FileRouteTypes {
     | '/inscricao'
     | '/_authenticated/admin'
     | '/_authenticated/minha-conta'
+    | '/api/public/create-preference'
     | '/api/public/seed-admin-password'
     | '/api/public/seed-test-user'
     | '/api/public/setup-admin'
@@ -149,6 +162,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   CheckoutRoute: typeof CheckoutRoute
   InscricaoRoute: typeof InscricaoRoute
+  ApiPublicCreatePreferenceRoute: typeof ApiPublicCreatePreferenceRoute
   ApiPublicSeedAdminPasswordRoute: typeof ApiPublicSeedAdminPasswordRoute
   ApiPublicSeedTestUserRoute: typeof ApiPublicSeedTestUserRoute
   ApiPublicSetupAdminRoute: typeof ApiPublicSetupAdminRoute
@@ -226,6 +240,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSeedAdminPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/create-preference': {
+      id: '/api/public/create-preference'
+      path: '/api/public/create-preference'
+      fullPath: '/api/public/create-preference'
+      preLoaderRoute: typeof ApiPublicCreatePreferenceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -248,6 +269,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   CheckoutRoute: CheckoutRoute,
   InscricaoRoute: InscricaoRoute,
+  ApiPublicCreatePreferenceRoute: ApiPublicCreatePreferenceRoute,
   ApiPublicSeedAdminPasswordRoute: ApiPublicSeedAdminPasswordRoute,
   ApiPublicSeedTestUserRoute: ApiPublicSeedTestUserRoute,
   ApiPublicSetupAdminRoute: ApiPublicSetupAdminRoute,

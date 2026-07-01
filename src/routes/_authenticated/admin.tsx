@@ -118,6 +118,20 @@ function AdminPage() {
     );
   }
 
+  async function deleteRegistration(id: string, name: string) {
+    const confirmDelete = confirm(
+      `Tem certeza que deseja excluir a inscrição de ${name}? Esta ação não pode ser desfeita.`
+    );
+    if (!confirmDelete) return;
+
+    const { error } = await supabase.from("registrations").delete().eq("id", id);
+    if (error) {
+      alert("Erro ao excluir: " + error.message);
+      return;
+    }
+    setRegistrations((prev) => prev.filter((r) => r.id !== id));
+  }
+
   const categories = useMemo(
     () => Array.from(new Set(registrations.map((r) => r.category_name))),
     [registrations],
@@ -437,6 +451,12 @@ function AdminPage() {
                             Cancelar
                           </button>
                         )}
+                        <button
+                          onClick={() => deleteRegistration(r.id, p?.full_name ?? "Cliente")}
+                          className="text-[10px] font-bold uppercase tracking-widest text-destructive hover:underline cursor-pointer mt-1"
+                        >
+                          Excluir
+                        </button>
                       </div>
                     </td>
                   </tr>
