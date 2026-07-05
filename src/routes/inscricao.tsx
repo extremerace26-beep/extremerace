@@ -4,7 +4,7 @@ import { z } from "zod";
 
 type CategoryId = "elite";
 
-const FIRST_LOT_CHECKOUT_URL = "https://mpago.la/24Jq5Mk";
+const FIRST_LOT_CHECKOUT_URL = "https://loja.infinitepay.io/bwg/dnr1928-extreme-race-v-lote-promocional";
 
 const CATEGORIES: Record<CategoryId, {
   id: CategoryId;

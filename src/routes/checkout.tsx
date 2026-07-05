@@ -1,7 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { createWalletBrick, startCheckout } from "@/lib/mercadopago";
 
 type Payload = {
   category: { id: string; name: string; price: number; priceLabel: string };
@@ -166,21 +165,7 @@ function CheckoutPage() {
         }
       }
 
-      const response = await startCheckout({
-        title: `Inscrição Extreme Race - ${data.category.name}`,
-        quantity: 1,
-        currency_id: "BRL",
-        unit_price: data.category.price,
-      });
-
-      if (response.preferenceId) {
-        await createWalletBrick(response.preferenceId);
-        setWalletCreated(true);
-      } else if (response.init_point) {
-        window.location.assign(response.init_point);
-      } else {
-        throw new Error("Resposta inválida do checkout do Mercado Pago");
-      }
+      window.location.assign("https://loja.infinitepay.io/bwg/dnr1928-extreme-race-v-lote-promocional");
     } catch (error) {
       console.error("[Checkout] preference creation failed", error);
       setError(error instanceof Error ? error.message : "Erro ao iniciar o pagamento.");
