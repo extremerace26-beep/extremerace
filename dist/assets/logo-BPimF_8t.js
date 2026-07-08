@@ -1,0 +1,1 @@
+var e=`/assets/logo-z-2GBCQe.png`;export{e as t};
