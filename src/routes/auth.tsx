@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
+import logo from "@/assets/logo.png";
 
 const searchSchema = z.object({
   redirect: z.string().optional(),
@@ -73,8 +74,8 @@ function AuthPage() {
   return (
     <div className="min-h-screen bg-background text-foreground grid lg:grid-cols-2">
       <aside className="hidden lg:flex flex-col justify-between p-12 bg-foreground text-background relative overflow-hidden">
-        <Link to="/" className="font-display text-2xl font-black tracking-tighter uppercase relative z-10">
-          EXTREME<span className="text-brand">/</span>RACE
+        <Link to="/" className="inline-flex items-center relative z-10">
+          <img src={logo} alt="Extreme Race" className="h-14 md:h-16 object-contain" />
         </Link>
         <div className="relative z-10">
           <span className="font-mono text-xs tracking-[0.3em] uppercase text-brand">[ Área do atleta ]</span>
@@ -92,8 +93,8 @@ function AuthPage() {
       </aside>
 
       <main className="flex flex-col justify-center px-6 py-16 md:px-16 max-w-xl mx-auto w-full">
-        <Link to="/" className="lg:hidden font-display text-2xl font-black tracking-tighter uppercase mb-8">
-          EXTREME<span className="text-brand">/</span>RACE
+        <Link to="/" className="lg:hidden inline-flex items-center mb-8">
+          <img src={logo} alt="Extreme Race" className="h-14 md:h-16 object-contain" />
         </Link>
         <span className="text-brand font-mono text-xs tracking-[0.3em] uppercase">
           [ {mode === "signin" ? "Entrar" : "Criar conta"} ]

@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import logo from "@/assets/logo.png";
 
 type Payload = {
   category: { id: string; name: string; price: number; priceLabel: string };
@@ -221,8 +222,8 @@ function CheckoutPage() {
     <div className="min-h-screen bg-background text-foreground">
       <header className="border-b border-border">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link to="/" className="font-display text-2xl font-black tracking-tighter uppercase">
-            EXTREME<span className="text-brand">/</span>RACE
+          <Link to="/" className="inline-flex items-center">
+            <img src={logo} alt="Extreme Race" className="h-14 md:h-16 object-contain" />
           </Link>
           <Link
             to="/inscricao"

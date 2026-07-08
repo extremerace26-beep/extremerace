@@ -1,12 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import logo from "@/assets/logo.png";
 import heroImage from "@/assets/hero-race.jpg";
-import obstacleRope from "@/assets/obstacle-rope.jpg";
-import obstacleMud from "@/assets/obstacle-mud.jpg";
-import obstacleWall from "@/assets/obstacle-wall.jpg";
-import obstacleCarry from "@/assets/obstacle-carry.jpg";
-import obstacleRings from "@/assets/obstacle-rings.jpg";
+import obstacleQuebraPeito from "@/assets/obstacle-quebra-peito.jpg";
 import obstacleFire from "@/assets/obstacle-fire.jpg";
+import obstacleMacaquinho from "@/assets/obstacle-macaquinho.jpg";
+import obstacleRastejoSangrento from "@/assets/obstacle-rastejo-sangrento.jpg";
+import obstacleParedeContencao from "@/assets/obstacle-parede-contencao.jpg";
+import obstacleParedeChoro from "@/assets/obstacle-parede-choro.jpg";
+import obstacleParedePneus from "@/assets/obstacle-parede-pneus.jpg";
 
 export const Route = createFileRoute("/")({
   component: ExtremeRace,
@@ -14,56 +16,42 @@ export const Route = createFileRoute("/")({
 
 const obstacles = [
   {
-    name: "Muro Vertical",
-    description: "Muro inclinado de 4 metros sem apoios laterais. Pura força e técnica.",
-    image: obstacleWall,
+    name: "Obstáculo Macaquinho",
+    description: "Um desafio rápido e traiçoeiro que exige força e equilíbrio.",
+    image: obstacleMacaquinho,
   },
   {
-    name: "Corda Extrema",
-    description: "Escalada vertical de 6 metros em corda de sisal molhada. Toque o sino.",
-    image: obstacleRope,
+    name: "Rastejo Sangrento",
+    description: "Rastejo extremo sob arame e lama, só para os mais resistentes.",
+    image: obstacleRastejoSangrento,
   },
   {
-    name: "Lama Profunda",
-    description: "Rastejo militar de 50m sob arame farpado e lama densa.",
-    image: obstacleMud,
+    name: "Parede de Contenção",
+    description: "Uma barreira alta que testa sua técnica e explosão.",
+    image: obstacleParedeContencao,
   },
   {
-    name: "Transporte de Carga",
-    description: "Saco de 25kg por 400m em terreno irregular. Coração no limite.",
-    image: obstacleCarry,
+    name: "Parede do Choro",
+    description: "Subida brutal onde poucos conseguem manter o ritmo.",
+    image: obstacleParedeChoro,
   },
   {
-    name: "Escalada Suspensa",
-    description: "Argolas e barras sobre o fosso de água. Falhou, molhou.",
-    image: obstacleRings,
+    name: "Parede de Pneus",
+    description: "Navegue entre pneus soltos enquanto busca o topo.",
+    image: obstacleParedePneus,
   },
   {
-    name: "Salto de Fogo",
-    description: "A última prova antes da chegada. Voa por cima das chamas.",
-    image: obstacleFire,
-  },
-];
-
-const categories = [
-  {
-    slug: "elite" as const,
-    badge: "Competitivo",
-    name: "Elite",
-    price: "Lote 1 • R$ 119,99",
-    description: "Para atletas que disputam o pódio.",
-    features: ["Largada exclusiva às 07:00", "Premiação em dinheiro Top 5", "Cronometragem com chip", "Penalidades rigorosas por obstáculo"],
-    highlight: true,
+    name: "Quebra Peito",
+    description: "A prova final que testa sua força máxima antes da meta.",
+    image: obstacleQuebraPeito,
   },
 ];
 
 const schedule = [
-  { time: "05:30", title: "Entrega de Kits", desc: "Retirada antecipada na arena." },
-  { time: "06:00", title: "Abertura da Arena", desc: "Check-in e guarda-volumes liberados." },
-  { time: "07:00", title: "Largada Elite", desc: "Atletas competidores no portão de saída." },
-  { time: "08:00", title: "Largadas Open", desc: "Baterias a cada 15 minutos." },
-  { time: "11:30", title: "Largada Equipes", desc: "Bateria especial para os times." },
-  { time: "14:00", title: "Premiação", desc: "Pódio Elite e sorteios entre finishers." },
+  { time: "18 e 19 de setembro", title: "Entrega de Kits", desc: "Entrega de kits dia 18 e 19 de setembro" },
+  { time: "05:00h", title: "Abertura da Arena", desc: "Manhã" },
+  { time: "06:00", title: "Largada Elite", desc: "" },
+  { time: "10 em 10 minutos", title: "Demais categorias", desc: "Demais categorias de 10 em 10 minutos" },
 ];
 
 const faqs = [
@@ -101,8 +89,8 @@ function ExtremeRace() {
       {/* NAV */}
       <nav className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <a href="#top" className="font-display text-2xl font-black tracking-tighter uppercase">
-            Extreme<span className="text-brand">Race</span>
+          <a href="#top" className="inline-flex items-center">
+            <img src={logo} alt="Extreme Race" className="h-14 md:h-16 object-contain" />
           </a>
           <div className="hidden md:flex items-center gap-8 text-xs font-semibold tracking-widest uppercase text-muted-foreground">
             <a href="#desafio" className="hover:text-brand transition-colors">Obstáculos</a>
@@ -140,15 +128,18 @@ function ExtremeRace() {
         <div className="absolute inset-0 bg-gradient-to-r from-background/60 via-transparent to-background/60" />
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 text-center">
-          <div className="inline-flex items-center gap-3 mb-8 border border-border bg-background/60 backdrop-blur px-4 py-2">
+          <div className="inline-flex flex-col items-center gap-3 mb-8 border border-border bg-background/60 backdrop-blur px-4 py-2">
             <span className="size-2 bg-brand animate-pulse" />
             <span className="font-mono text-[11px] uppercase tracking-[0.3em] text-muted-foreground">
-              24 · Agosto · 2026 — São Paulo
+              20 - setembro - 2026 - Piripiri-PI
+            </span>
+            <span className="font-mono text-[11px] uppercase tracking-[0.3em] text-muted-foreground">
+              Parque de Exposição Carolina Freitas Lira
             </span>
           </div>
 
           <h1 className="font-display text-6xl sm:text-7xl md:text-9xl font-black uppercase leading-[0.85] tracking-tighter text-balance max-w-[18ch] mx-auto">
-            Você contra seus <span className="text-brand italic">próprios limites</span>
+            O Desafio mais brutal do <span className="text-brand italic">Piauí</span>
           </h1>
 
           <p className="mt-8 text-lg md:text-xl text-muted-foreground font-medium text-pretty max-w-[44ch] mx-auto">
@@ -255,67 +246,353 @@ function ExtremeRace() {
       </section>
 
       {/* CATEGORIES */}
-      <section id="categorias" className="py-24 md:py-32 bg-surface/40 border-y border-border">
+      <section id="categorias" className="py-24 md:py-32 bg-[#0A0A0A] border-y border-border">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <span className="text-brand font-mono text-xs tracking-[0.3em] uppercase">[ Section_03 ]</span>
-            <h2 className="font-display text-5xl md:text-7xl font-black uppercase leading-none tracking-tighter mt-3">
-              Escolha sua <span className="text-brand italic">categoria</span>
-            </h2>
-            <p className="mt-4 text-muted-foreground max-w-xl mx-auto">
-              Lote 1 disponível por tempo limitado. Quem se inscreve cedo, larga na frente.
+          {/* Header */}
+          <div className="text-center mb-8">
+            <span className="text-brand font-mono text-xs tracking-[0.3em] uppercase block mb-3">
+              INSCRIÇÕES ABERTAS
+            </span>
+            <div className="flex items-center justify-center gap-4">
+              <div className="hidden sm:flex items-center gap-2">
+                <div className="w-12 h-[2px] bg-brand" />
+                <svg className="w-4 h-4 text-brand rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </div>
+              <h2 className="font-display text-5xl md:text-7xl font-black uppercase leading-none tracking-tighter text-white">
+                ESCOLHA SUA INSCRIÇÃO
+              </h2>
+              <div className="hidden sm:flex items-center gap-2">
+                <svg className="w-4 h-4 text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+                <div className="w-12 h-[2px] bg-brand" />
+              </div>
+            </div>
+            <p className="mt-4 text-muted-foreground text-sm max-w-xl mx-auto">
+              Selecione a modalidade que melhor atende você.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-1 gap-6 justify-items-center">
-            {categories.map((cat) => (
-              <div
-                key={cat.name}
-                className={`relative p-10 border bg-background flex flex-col w-full md:w-96 ${
-                  cat.highlight ? "border-brand" : "border-border"
-                }`}
-              >
-                <span
-                  className={`font-mono text-[10px] tracking-[0.3em] uppercase font-bold ${
-                    cat.highlight ? "text-brand" : "text-muted-foreground"
-                  }`}
-                >
-                  {cat.badge}
-                </span>
-                <h3 className="font-display text-5xl md:text-6xl font-black uppercase mt-3 tracking-tight">
-                  {cat.name}
-                </h3>
-                <p className="text-sm text-muted-foreground mt-3">{cat.description}</p>
+          {/* Banner / Faixa Informativa */}
+          <div className="max-w-3xl mx-auto mb-16 border border-brand/50 bg-[#0A0A0A] rounded-xl p-4 flex items-center justify-center gap-4 text-center">
+            <div className="bg-brand/10 p-2.5 rounded-lg shrink-0 hidden sm:block">
+              <svg className="w-6 h-6 text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
+              </svg>
+            </div>
+            <div className="text-sm">
+              <p className="font-bold text-white leading-snug">
+                Garanta sua vaga antes da próxima virada de lote.
+              </p>
+              <p className="text-brand font-medium mt-0.5 leading-snug">
+                Os valores aumentam conforme o cronograma do evento.
+              </p>
+            </div>
+          </div>
 
-                <div className="my-8">
-                  <span className="font-display text-5xl font-black">{cat.price}</span>
-                  {cat.priceSuffix && (
-                    <span className="text-muted-foreground text-sm italic">{cat.priceSuffix}</span>
-                  )}
-                </div>
-
-                <ul className="space-y-3 mb-10 flex-grow">
-                  {cat.features.map((f) => (
-                    <li key={f} className="flex items-start gap-3 text-sm">
-                      <span className="size-1.5 bg-brand mt-2 shrink-0" />
-                      <span className="text-foreground/90">{f}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <Link
-                  to="/inscricao"
-                  search={{ categoria: cat.slug }}
-                  className={`w-full py-4 text-xs font-black uppercase tracking-widest transition-all text-center ${
-                    cat.highlight
-                      ? "bg-brand text-brand-foreground hover:brightness-110"
-                      : "border border-border text-foreground hover:bg-foreground hover:text-background"
-                  }`}
-                >
-                  Inscrever-se
-                </Link>
+          {/* Grid of 4 Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
+            {/* Card 1: Individual */}
+            <div className="relative p-8 border border-brand bg-[#0A0A0A] rounded-xl flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_0_20px_rgba(102,243,102,0.15)]">
+              <div className="text-brand mb-6 shrink-0">
+                <svg className="w-14 h-14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
               </div>
-            ))}
+              
+              <h3 className="font-display text-3xl font-black uppercase leading-tight tracking-wide mb-4">
+                INSCRIÇÃO<br />
+                <span className="text-brand">INDIVIDUAL</span>
+              </h3>
+
+              <div className="mb-6 flex flex-col items-center">
+                <span className="font-display text-5xl font-black text-white">R$ 129,90</span>
+                <span className="text-brand text-xs font-semibold uppercase tracking-wider mt-1">
+                  Lote até 30/07/2026
+                </span>
+              </div>
+
+              <ul className="space-y-3 mb-8 w-full text-left flex-grow">
+                <li className="flex items-start gap-2.5 text-sm text-foreground/90">
+                  <span className="text-brand shrink-0 mt-0.5">
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </span>
+                  <span>Cronometragem com chip</span>
+                </li>
+                <li className="flex items-start gap-2.5 text-sm text-foreground/90">
+                  <span className="text-brand shrink-0 mt-0.5">
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </span>
+                  <span>Camiseta oficial</span>
+                </li>
+                <li className="flex items-start gap-2.5 text-sm text-foreground/90">
+                  <span className="text-brand shrink-0 mt-0.5">
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </span>
+                  <span>Medalha Finisher</span>
+                </li>
+                <li className="flex items-start gap-2.5 text-sm text-foreground/90">
+                  <span className="text-brand shrink-0 mt-0.5">
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </span>
+                  <span>Seguro do atleta</span>
+                </li>
+              </ul>
+
+              <Link
+                to="/inscricao"
+                className="w-full py-4 bg-brand text-brand-foreground text-sm font-black uppercase tracking-widest hover:brightness-110 hover:shadow-[0_0_15px_rgba(102,243,102,0.4)] transition-all text-center rounded-lg shrink-0"
+              >
+                Inscrever-se
+              </Link>
+            </div>
+
+            {/* Card 2: Desconto para Grupos */}
+            <div className="relative p-8 border border-brand bg-[#0A0A0A] rounded-xl flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_0_20px_rgba(102,243,102,0.15)]">
+              <div className="text-brand mb-6 shrink-0">
+                <svg className="w-14 h-14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 18a3 3 0 0 1 3-3h1" />
+                  <circle cx="6" cy="9" r="2.5" />
+                  <path d="M16 15h1a3 3 0 0 1 3 3" />
+                  <circle cx="18" cy="9" r="2.5" />
+                  <path d="M12 21v-2a4 4 0 0 0-4-4h8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="8" r="3.5" />
+                </svg>
+              </div>
+
+              <h3 className="font-display text-3xl font-black uppercase leading-tight tracking-wide mb-4">
+                DESCONTO PARA<br />
+                <span className="text-brand">GRUPOS</span>
+              </h3>
+
+              <div className="mb-6 flex flex-col items-center">
+                <span className="font-display text-5xl font-black text-white">R$ 119,90</span>
+                <span className="text-brand text-xs font-semibold uppercase tracking-wider mt-1">
+                  por atleta
+                </span>
+              </div>
+
+              <ul className="space-y-3 mb-8 w-full text-left flex-grow">
+                <li className="flex items-start gap-2.5 text-sm text-foreground/90">
+                  <span className="text-brand shrink-0 mt-0.5">
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </span>
+                  <span>Mais de 10 atletas</span>
+                </li>
+                <li className="flex items-start gap-2.5 text-sm text-foreground/90">
+                  <span className="text-brand shrink-0 mt-0.5">
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </span>
+                  <span>Pré-cadastro obrigatório</span>
+                </li>
+                <li className="flex items-start gap-2.5 text-sm text-foreground/90">
+                  <span className="text-brand shrink-0 mt-0.5">
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </span>
+                  <span>Atendimento via WhatsApp</span>
+                </li>
+                <li className="flex items-start gap-2.5 text-sm text-foreground/90">
+                  <span className="text-brand shrink-0 mt-0.5">
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </span>
+                  <span>Valor promocional</span>
+                </li>
+              </ul>
+
+              <Link
+                to="/inscricao"
+                className="w-full py-4 bg-brand text-brand-foreground text-sm font-black uppercase tracking-widest hover:brightness-110 hover:shadow-[0_0_15px_rgba(102,243,102,0.4)] transition-all text-center rounded-lg shrink-0 flex items-center justify-center gap-2"
+              >
+                <span>Inscrever-se</span>
+              </Link>
+            </div>
+
+            {/* Card 3: Dupla */}
+            <div className="relative p-8 border border-brand bg-[#0A0A0A] rounded-xl flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_0_20px_rgba(102,243,102,0.15)]">
+              <div className="text-brand mb-6 shrink-0">
+                <svg className="w-14 h-14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                  <circle cx="10" cy="7" r="4" />
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                  <circle cx="19" cy="9" r="3" />
+                </svg>
+              </div>
+
+              <h3 className="font-display text-3xl font-black uppercase leading-tight tracking-wide mb-4">
+                INSCRIÇÃO EM<br />
+                <span className="text-brand">DUPLA</span>
+              </h3>
+
+              <div className="mb-6 flex flex-col items-center">
+                <span className="font-display text-5xl font-black text-white">R$ 239,98</span>
+                <span className="text-brand text-xs font-semibold uppercase tracking-wider mt-1">
+                  valor referente à dupla
+                </span>
+              </div>
+
+              <ul className="space-y-3 mb-8 w-full text-left flex-grow">
+                <li className="flex items-start gap-2.5 text-sm text-foreground/90">
+                  <span className="text-brand shrink-0 mt-0.5">
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </span>
+                  <span>Categoria Open</span>
+                </li>
+                <li className="flex items-start gap-2.5 text-sm text-foreground/90">
+                  <span className="text-brand shrink-0 mt-0.5">
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </span>
+                  <span>Dupla masculina, feminina ou mista</span>
+                </li>
+                <li className="flex items-start gap-2.5 text-sm text-foreground/90">
+                  <span className="text-brand shrink-0 mt-0.5">
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </span>
+                  <span>Valor referente à dupla</span>
+                </li>
+              </ul>
+
+              <Link
+                to="/inscricao"
+                className="w-full py-4 bg-brand text-brand-foreground text-sm font-black uppercase tracking-widest hover:brightness-110 hover:shadow-[0_0_15px_rgba(102,243,102,0.4)] transition-all text-center rounded-lg shrink-0"
+              >
+                Inscrever dupla
+              </Link>
+            </div>
+
+            {/* Card 4: Econômica */}
+            <div className="relative p-8 border border-brand bg-[#0A0A0A] rounded-xl flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_0_20px_rgba(102,243,102,0.15)]">
+              <div className="relative mb-6 shrink-0">
+                <svg className="w-14 h-14 text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M6 18V9h12v9a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2Z" />
+                  <path d="M6 9H3V5h3l3 2 3-2 3 2 3-2h3v4h-3v9" />
+                </svg>
+                <div className="absolute -bottom-1 -right-1 bg-[#0A0A0A] rounded-full p-0.5">
+                  <svg className="w-5 h-5 text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+                  </svg>
+                </div>
+              </div>
+
+              <h3 className="font-display text-3xl font-black uppercase leading-tight tracking-wide mb-4">
+                INSCRIÇÃO<br />
+                <span className="text-brand">ECONÔMICA</span>
+              </h3>
+
+              <div className="mb-6 flex flex-col items-center">
+                <span className="font-display text-5xl font-black text-white">R$ 90,00</span>
+                <span className="text-brand text-xs font-semibold uppercase tracking-wider mt-1">
+                  Lote até 11/07/2026
+                </span>
+              </div>
+
+              <ul className="space-y-3 mb-8 w-full text-left flex-grow">
+                <li className="flex items-start gap-2.5 text-sm text-foreground/90">
+                  <span className="text-brand shrink-0 mt-0.5">
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </span>
+                  <span>Sem camiseta oficial</span>
+                </li>
+                <li className="flex items-start gap-2.5 text-sm text-foreground/90">
+                  <span className="text-brand shrink-0 mt-0.5">
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </span>
+                  <span>Mais de 20 atletas</span>
+                </li>
+                <li className="flex items-start gap-2.5 text-sm text-foreground/90">
+                  <span className="text-brand shrink-0 mt-0.5">
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </span>
+                  <span>Ideal para grupos e assessorias</span>
+                </li>
+              </ul>
+
+              <Link
+                to="/inscricao"
+                className="w-full py-4 bg-brand text-brand-foreground text-sm font-black uppercase tracking-widest hover:brightness-110 hover:shadow-[0_0_15px_rgba(102,243,102,0.4)] transition-all text-center rounded-lg shrink-0"
+              >
+                Inscrever-se
+              </Link>
+            </div>
+          </div>
+
+          {/* Footer Strip */}
+          <div className="mt-16 border border-border bg-[#0A0A0A] rounded-xl p-6 grid grid-cols-1 md:grid-cols-3 gap-6 divide-y md:divide-y-0 md:divide-x divide-border">
+            <div className="flex items-center gap-4 justify-center md:justify-start px-4 py-3 md:py-0">
+              <div className="bg-brand/10 p-3 rounded-full text-brand shrink-0">
+                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  <polyline points="9 11 11 13 15 9" />
+                </svg>
+              </div>
+              <div>
+                <h4 className="font-bold text-xs uppercase tracking-wider text-brand">Inscrição Segura</h4>
+                <p className="text-muted-foreground text-xs mt-0.5">Ambiente 100% seguro e verificado</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 justify-center md:justify-start px-4 md:pl-8 py-3 md:py-0">
+              <div className="bg-brand/10 p-3 rounded-full text-brand shrink-0">
+                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+              </div>
+              <div>
+                <h4 className="font-bold text-xs uppercase tracking-wider text-brand">Pagamento Protegido</h4>
+                <p className="text-muted-foreground text-xs mt-0.5">Seus dados sempre protegidos</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 justify-center md:justify-start px-4 md:pl-8 py-3 md:py-0">
+              <div className="bg-brand/10 p-3 rounded-full text-brand shrink-0">
+                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+                  <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+                  <path d="M4 22h16" />
+                  <path d="M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34" />
+                  <path d="M12 2a6 6 0 0 1 6 6v5a6 6 0 0 1-6 6 6 6 0 0 1-6-6V8a6 6 0 0 1 6-6z" />
+                </svg>
+              </div>
+              <div>
+                <h4 className="font-bold text-xs uppercase tracking-wider text-brand">Evento Oficial</h4>
+                <p className="text-muted-foreground text-xs mt-0.5">Extreme Race V - Competitivo</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>

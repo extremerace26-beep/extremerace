@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import logo from "@/assets/logo.png";
 
 type AdminRegistration = {
   id: string;
@@ -262,8 +263,8 @@ function AdminPage() {
       <header className="border-b border-border sticky top-0 bg-background/95 backdrop-blur z-20">
         <div className="max-w-[1600px] mx-auto px-6 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-6">
-            <Link to="/" className="font-display text-xl font-black tracking-tighter uppercase">
-              EXTREME<span className="text-brand">/</span>RACE
+            <Link to="/" className="inline-flex items-center">
+              <img src={logo} alt="Extreme Race" className="h-14 md:h-16 object-contain" />
             </Link>
             <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-brand">
               [ Admin ]

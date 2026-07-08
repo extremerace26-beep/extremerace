@@ -1,83 +1,130 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+﻿import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { z } from "zod";
+import logo from "@/assets/logo.png";
 
-type CategoryId = "elite";
+type ShirtSize = "P" | "M" | "G" | "GG";
 
-const FIRST_LOT_CHECKOUT_URL = "https://loja.infinitepay.io/bwg/dnr1928-extreme-race-v-lote-promocional";
+type CategoryId =
+  | "individual"
+  | "grupos"
+  | "dupla"
+  | "economica";
+
+const DUO_CATEGORIES = ["dupla"] as const;
+
+type DuoCategoryId = (typeof DUO_CATEGORIES)[number];
+
+const CATEGORY_CHECKOUT_LINKS: Record<CategoryId, string> = {
+  individual: "https://loja.infinitepay.io/bwg/jcc6942-inscricao-lote-1-extreme-race",
+  grupos: "https://loja.infinitepay.io/bwg/dnr1928-extreme-race-v-lote-promocional",
+  dupla: "https://loja.infinitepay.io/bwg/vzp3441-inscricao-em-dupla",
+  economica: "https://loja.infinitepay.io/bwg/xip1831-inscricao-sem-blusa-economica",
+};
 
 const CATEGORIES: Record<CategoryId, {
   id: CategoryId;
-  badge: string;
   name: string;
   price: number;
   priceLabel: string;
   description: string;
-  features: string[];
-  highlight?: boolean;
 }> = {
-  elite: {
-    id: "elite",
-    badge: "Competitivo",
-    name: "Elite",
-    price: 119.99,
-    priceLabel: "Lote 1 • R$ 119,99",
-    description: "Para atletas que disputam o pódio.",
-    features: ["Largada 07:00", "Premiação Top 5", "Chip de cronometragem"],
-    highlight: true,
+  individual: {
+    id: "individual",
+    name: "INSCRIÇÃO INDIVIDUAL",
+    price: 129.9,
+    priceLabel: "R$ 129,90",
+    description: "Categoria individual com camiseta e chip.",
+  },
+  grupos: {
+    id: "grupos",
+    name: "DESCONTO PARA GRUPOS",
+    price: 119.9,
+    priceLabel: "R$ 119,90",
+    description: "Valor por atleta para inscrições em grupo.",
+  },
+  dupla: {
+    id: "dupla",
+    name: "INSCRIÇÃO EM DUPLA",
+    price: 239.98,
+    priceLabel: "R$ 239,98",
+    description: "Dupla masculina, feminina ou mista em categoria open.",
+  },
+  economica: {
+    id: "economica",
+    name: "INSCRIÇÃO ECONÔMICA",
+    price: 90,
+    priceLabel: "R$ 90,00",
+    description: "Opção econômica sem camiseta oficial.",
   },
 };
 
 const searchSchema = z.object({
-  categoria: z.enum(["elite", "open", "equipes"]).optional(),
+  categoria: z.enum(["individual", "grupos", "dupla", "economica"]).optional(),
 });
 
 export const Route = createFileRoute("/inscricao")({
   validateSearch: searchSchema,
   head: () => ({
     meta: [
-      { title: "Inscrição — Extreme Race" },
-      { name: "description", content: "Garanta sua vaga na Extreme Race. Escolha sua categoria e finalize sua inscrição." },
+      { title: "InscriÃ§Ã£o â€” Extreme Race" },
+      { name: "description", content: "Garanta sua vaga na Extreme Race. Escolha sua categoria e finalize sua inscriÃ§Ã£o." },
     ],
   }),
   component: InscricaoPage,
 });
 
-const athleteSchema = z.object({
+const athleteBaseSchema = z.object({
   fullName: z.string().trim().min(3, "Informe seu nome completo").max(120),
-  cpf: z.string().trim().regex(/^\d{3}\.?\d{3}\.?\d{3}-?\d{2}$/, "CPF inválido"),
+  email: z.string().trim().email("E-mail inválido").max(255),
+  cpf: z.string().trim().regex(/^\d{3}\.??\d{3}\.??\d{3}-?\d{2}$/, "CPF inválido"),
   birthDate: z.string().refine((v) => {
     const d = new Date(v);
     if (Number.isNaN(d.getTime())) return false;
     const age = (Date.now() - d.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
     return age >= 16 && age <= 90;
   }, "Idade mínima 16 anos"),
-  gender: z.enum(["M", "F", "O"], { message: "Selecione" }),
-  email: z.string().trim().email("E-mail inválido").max(255),
+  group: z.enum(["Equipe", "Box", "Academia", "Studio"], { message: "Selecione" }),
   phone: z.string().trim().min(10, "Telefone inválido").max(20),
-  password: z.string().trim().min(6, "Senha mínima 6 caracteres"),
-  emergencyName: z.string().trim().min(3, "Informe o contato de emergência").max(120),
-  emergencyPhone: z.string().trim().min(10, "Telefone inválido").max(20),
-  shirtSize: z.enum(["PP", "P", "M", "G", "GG", "XGG"], { message: "Selecione" }),
-  teamName: z.string().trim().max(80).optional().or(z.literal("")),
   acceptTerms: z.literal(true, { message: "Você precisa aceitar o regulamento" }),
 });
 
-type AthleteData = z.infer<typeof athleteSchema>;
+const duoParticipantSchema = z.object({
+  participant2FullName: z.string().trim().min(3, "Informe o nome completo do segundo atleta").max(120),
+  participant2Cpf: z.string().trim().regex(/^\d{3}\.??\d{3}\.??\d{3}-?\d{2}$/, "CPF inválido"),
+  participant2BirthDate: z.string().refine((v) => {
+    const d = new Date(v);
+    if (Number.isNaN(d.getTime())) return false;
+    const age = (Date.now() - d.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
+    return age >= 16 && age <= 90;
+  }, "Idade mínima 16 anos"),
+});
 
-const STORAGE_KEY = "extreme-race:inscricao";
+const passwordAndShirtSchema = z.object({
+  password: z.string().min(6, "Senha com no mínimo 6 caracteres"),
+  shirtSize: z.enum(["P", "M", "G", "GG"] as const),
+});
+
+const duoPasswordAndShirtSchema = passwordAndShirtSchema.extend({
+  participant2ShirtSize: z.enum(["P", "M", "G", "GG"] as const),
+});
+
+const athleteSchema = athleteBaseSchema.merge(duoParticipantSchema.partial());
+
+type AthleteData = z.infer<typeof athleteSchema>;const STORAGE_KEY = "extreme-race:inscricao";
 
 function InscricaoPage() {
   const navigate = useNavigate();
   const { categoria } = Route.useSearch();
-  const [step, setStep] = useState<1 | 2 | 3>(categoria ? 2 : 1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(categoria ? 2 : 1);
   const [selected, setSelected] = useState<CategoryId | null>(categoria ?? null);
-  const [form, setForm] = useState<Partial<AthleteData>>({});
+  const [form, setForm] = useState<Partial<AthleteData> & { categoria?: CategoryId }>({ categoria: categoria ?? undefined });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
 
-  const cat = selected ? CATEGORIES[selected] : null;
+  const cat = form.categoria ? CATEGORIES[form.categoria] : null;
+  const isDuo = cat ? (DUO_CATEGORIES as readonly CategoryId[]).includes(cat.id) : false;
 
   const set = <K extends keyof AthleteData>(k: K, v: AthleteData[K]) => {
     setForm((f) => ({ ...f, [k]: v }));
@@ -85,16 +132,23 @@ function InscricaoPage() {
 
   function handleSelectCategory(id: CategoryId) {
     setSelected(id);
+    setForm((f) => ({ ...f, categoria: id }));
+    setErrors((prev) => {
+      const next = { ...prev };
+      delete next.categoria;
+      return next;
+    });
     setStep(2);
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function handleSubmitData(e: React.FormEvent) {
     e.preventDefault();
-    const parsed = athleteSchema.safeParse({
-      ...form,
-      teamName: form.teamName ?? "",
-    });
+    const validationSchema = isDuo
+      ? athleteBaseSchema.merge(duoParticipantSchema)
+      : athleteBaseSchema;
+
+    const parsed = validationSchema.safeParse(form);
     if (!parsed.success) {
       const fieldErrors: Record<string, string> = {};
       for (const issue of parsed.error.issues) {
@@ -105,6 +159,23 @@ function InscricaoPage() {
     }
     setErrors({});
     setStep(3);
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function handleSubmitShirt(e: React.FormEvent) {
+    e.preventDefault();
+    const validationSchema = isDuo ? duoPasswordAndShirtSchema : passwordAndShirtSchema;
+    const parsed = validationSchema.safeParse(form);
+    if (!parsed.success) {
+      const fieldErrors: Record<string, string> = {};
+      for (const issue of parsed.error.issues) {
+        fieldErrors[issue.path.join(".")] = issue.message;
+      }
+      setErrors(fieldErrors);
+      return;
+    }
+    setErrors({});
+    setStep(4);
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -122,9 +193,9 @@ function InscricaoPage() {
 
       if (typeof window !== "undefined") {
         sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-
-        if (cat.id === "elite") {
-          window.location.assign(FIRST_LOT_CHECKOUT_URL);
+        const checkoutLink = CATEGORY_CHECKOUT_LINKS[cat.id];
+        if (checkoutLink) {
+          window.location.assign(checkoutLink);
           return;
         }
 
@@ -143,8 +214,8 @@ function InscricaoPage() {
       {/* HEADER */}
       <header className="border-b border-border bg-background/95 sticky top-0 z-50 backdrop-blur">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link to="/" className="font-display text-2xl font-black tracking-tighter uppercase">
-            EXTREME<span className="text-brand">/</span>RACE
+          <Link to="/" className="inline-flex items-center">
+            <img src={logo} alt="Extreme Race" className="h-14 md:h-16 object-contain" />
           </Link>
           <Link to="/" className="font-mono text-xs tracking-[0.2em] uppercase text-muted-foreground hover:text-foreground">
             ← Voltar
@@ -152,37 +223,35 @@ function InscricaoPage() {
         </div>
       </header>
 
-      {/* PROGRESS */}
-      <div className="border-b border-border">
-        <div className="max-w-4xl mx-auto px-6 py-6 flex items-center gap-4">
-          {[
-            { n: 1, label: "Categoria" },
-            { n: 2, label: "Dados do atleta" },
-            { n: 3, label: "Confirmação" },
-          ].map((s, i) => (
-            <div key={s.n} className="flex items-center gap-4 flex-1">
-              <div className="flex items-center gap-3">
-                <div
-                  className={`size-8 grid place-items-center font-display font-black text-sm border ${
-                    step >= s.n
-                      ? "bg-brand text-brand-foreground border-brand"
-                      : "border-border text-muted-foreground"
-                  }`}
-                >
-                  {s.n}
-                </div>
-                <span
-                  className={`font-mono text-[10px] tracking-[0.2em] uppercase hidden sm:block ${
-                    step >= s.n ? "text-foreground" : "text-muted-foreground"
-                  }`}
-                >
-                  {s.label}
-                </span>
+      <div className="max-w-4xl mx-auto px-6 py-6 flex items-center gap-4">
+        {[
+          { n: 1, label: "Categoria" },
+          { n: 2, label: "Dados do atleta" },
+          { n: 3, label: "Camiseta" },
+          { n: 4, label: "Confirmação" },
+        ].map((s, i) => (
+          <div key={s.n} className="flex items-center gap-4 flex-1">
+            <div className="flex items-center gap-3">
+              <div
+                className={`size-8 grid place-items-center font-display font-black text-sm border ${
+                  step >= s.n
+                    ? "bg-brand text-brand-foreground border-brand"
+                    : "border-border text-muted-foreground"
+                }`}
+              >
+                {s.n}
               </div>
-              {i < 2 && <div className={`flex-1 h-px ${step > s.n ? "bg-brand" : "bg-border"}`} />}
+              <span
+                className={`font-mono text-[10px] tracking-[0.2em] uppercase hidden sm:block ${
+                  step >= s.n ? "text-foreground" : "text-muted-foreground"
+                }`}
+              >
+                {s.label}
+              </span>
             </div>
-          ))}
-        </div>
+            {i < 3 && <div className={`flex-1 h-px ${step > s.n ? "bg-brand" : "bg-border"}`} />}
+          </div>
+        ))}
       </div>
 
       <main className="max-w-4xl mx-auto px-6 py-12 md:py-20">
@@ -193,37 +262,62 @@ function InscricaoPage() {
               Escolha sua <span className="text-brand italic">categoria</span>
             </h1>
 
-            <div className="grid md:grid-cols-3 gap-6">
-              {Object.values(CATEGORIES).map((c) => (
-                <button
-                  key={c.id}
-                  onClick={() => handleSelectCategory(c.id)}
-                  className={`text-left p-8 border bg-background flex flex-col transition-all hover:border-brand cursor-pointer ${
-                    c.highlight ? "border-brand" : "border-border"
-                  }`}
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (!selected) {
+                  setErrors((prev) => ({ ...prev, categoria: "Selecione a categoria" }));
+                  return;
+                }
+                setForm((f) => ({ ...f, categoria: selected }));
+                setErrors((prev) => {
+                  const next = { ...prev };
+                  delete next.categoria;
+                  return next;
+                });
+                setStep(2);
+                if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              className="space-y-8"
+            >
+              <Field label="Categorias" error={errors.categoria}>
+                <select
+                  value={selected ?? ""}
+                  onChange={(e) => setSelected(e.target.value as CategoryId)}
+                  className={inputCls}
                 >
-                  <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-muted-foreground">
-                    {c.badge}
-                  </span>
-                  <h3 className="font-display text-4xl font-black uppercase mt-2 tracking-tight">
-                    {c.name}
-                  </h3>
-                  <p className="text-sm text-muted-foreground mt-2">{c.description}</p>
-                  <div className="my-6 font-display text-4xl font-black">{c.priceLabel}</div>
-                  <ul className="space-y-2 text-sm flex-grow">
-                    {c.features.map((f) => (
-                      <li key={f} className="flex items-start gap-2">
-                        <span className="size-1.5 bg-brand mt-2 shrink-0" />
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="mt-8 font-mono text-xs tracking-[0.2em] uppercase text-brand">
-                    Selecionar →
-                  </div>
+                  <option value="">Selecione</option>
+                  {Object.values(CATEGORIES).map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+
+              <div className="rounded border border-border p-6 bg-background/50">
+                <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-muted-foreground mb-3">
+                  Categorias disponíveis
+                </p>
+                <ul className="grid gap-4 text-sm text-foreground">
+                  {Object.values(CATEGORIES).map((c) => (
+                    <li key={c.id} className="border border-border rounded px-4 py-3">
+                      <div className="font-semibold">{c.name}</div>
+                      <div className="text-muted-foreground text-xs">{c.description}</div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  className="px-8 py-4 text-xs font-black uppercase tracking-widest bg-brand text-brand-foreground hover:brightness-110 transition-all"
+                >
+                  Continuar →
                 </button>
-              ))}
-            </div>
+              </div>
+            </form>
           </section>
         )}
 
@@ -239,7 +333,7 @@ function InscricaoPage() {
                 onClick={() => setStep(1)}
                 className="text-foreground font-bold underline underline-offset-4 hover:text-brand cursor-pointer"
               >
-                {cat.name} — {cat.priceLabel}
+                {cat.name} â€” {cat.priceLabel}
               </button>
             </p>
 
@@ -272,30 +366,6 @@ function InscricaoPage() {
                     className={inputCls}
                   />
                 </Field>
-                <Field label="Gênero" error={errors.gender}>
-                  <select
-                    value={form.gender ?? ""}
-                    onChange={(e) => set("gender", e.target.value as AthleteData["gender"])}
-                    className={inputCls}
-                  >
-                    <option value="">Selecione</option>
-                    <option value="M">Masculino</option>
-                    <option value="F">Feminino</option>
-                    <option value="O">Outro</option>
-                  </select>
-                </Field>
-                <Field label="Tamanho da camisa" error={errors.shirtSize}>
-                  <select
-                    value={form.shirtSize ?? ""}
-                    onChange={(e) => set("shirtSize", e.target.value as AthleteData["shirtSize"])}
-                    className={inputCls}
-                  >
-                    <option value="">Selecione</option>
-                    {["PP", "P", "M", "G", "GG", "XGG"].map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
-                </Field>
                 <Field label="E-mail" error={errors.email}>
                   <input
                     type="email"
@@ -305,17 +375,20 @@ function InscricaoPage() {
                     autoComplete="email"
                   />
                 </Field>
-                <Field label="Senha" error={errors.password}>
-                  <input
-                    type="password"
-                    value={form.password ?? ""}
-                    onChange={(e) => set("password", e.target.value)}
+                <Field label="Grupo" error={errors.group}>
+                  <select
+                    value={form.group ?? ""}
+                    onChange={(e) => set("group", e.target.value as AthleteData["group"])}
                     className={inputCls}
-                    autoComplete="new-password"
-                    minLength={6}
-                  />
+                  >
+                    <option value="">Selecione</option>
+                    <option value="Equipe">Equipe</option>
+                    <option value="Box">Box</option>
+                    <option value="Academia">Academia</option>
+                    <option value="Studio">Studio</option>
+                  </select>
                 </Field>
-                <Field label="Telefone (WhatsApp)" error={errors.phone}>
+                <Field label="WhatsApp" error={errors.phone}>
                   <input
                     type="tel"
                     placeholder="(11) 90000-0000"
@@ -327,40 +400,41 @@ function InscricaoPage() {
                 </Field>
               </FieldGrid>
 
-              <div className="border-t border-border pt-8">
-                <h3 className="font-display text-lg font-black uppercase tracking-widest mb-6">
-                  Contato de emergência
-                </h3>
-                <FieldGrid>
-                  <Field label="Nome" error={errors.emergencyName}>
-                    <input
-                      type="text"
-                      value={form.emergencyName ?? ""}
-                      onChange={(e) => set("emergencyName", e.target.value)}
-                      className={inputCls}
-                    />
-                  </Field>
-                  <Field label="Telefone" error={errors.emergencyPhone}>
-                    <input
-                      type="tel"
-                      value={form.emergencyPhone ?? ""}
-                      onChange={(e) => set("emergencyPhone", e.target.value)}
-                      className={inputCls}
-                    />
-                  </Field>
-                </FieldGrid>
-              </div>
+              {isDuo && (
+                <div className="mt-12 border-t border-border pt-10">
+                  <h2 className="font-display text-3xl font-black uppercase tracking-tight mb-8">
+                    Dados do segundo participante
+                  </h2>
 
-              {cat.id === "equipes" && (
-                <div className="border-t border-border pt-8">
-                  <Field label="Nome da equipe" error={errors.teamName}>
-                    <input
-                      type="text"
-                      value={form.teamName ?? ""}
-                      onChange={(e) => set("teamName", e.target.value)}
-                      className={inputCls}
-                    />
-                  </Field>
+                  <FieldGrid>
+                    <Field label="Nome completo" error={errors.participant2FullName} className="md:col-span-2">
+                      <input
+                        type="text"
+                        value={form.participant2FullName ?? ""}
+                        onChange={(e) => set("participant2FullName", e.target.value)}
+                        className={inputCls}
+                        autoComplete="name"
+                      />
+                    </Field>
+                    <Field label="CPF" error={errors.participant2Cpf}>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="000.000.000-00"
+                        value={form.participant2Cpf ?? ""}
+                        onChange={(e) => set("participant2Cpf", e.target.value)}
+                        className={inputCls}
+                      />
+                    </Field>
+                    <Field label="Data de nascimento" error={errors.participant2BirthDate}>
+                      <input
+                        type="date"
+                        value={form.participant2BirthDate ?? ""}
+                        onChange={(e) => set("participant2BirthDate", e.target.value)}
+                        className={inputCls}
+                      />
+                    </Field>
+                  </FieldGrid>
                 </div>
               )}
 
@@ -373,7 +447,7 @@ function InscricaoPage() {
                 />
                 <span className="text-sm text-muted-foreground">
                   Li e aceito o regulamento, o termo de responsabilidade e autorizo o uso da minha
-                  imagem para divulgação do evento.
+                  imagem para divulgaÃ§Ã£o do evento.
                 </span>
               </label>
               {errors.acceptTerms && (
@@ -402,8 +476,78 @@ function InscricaoPage() {
         {step === 3 && cat && (
           <section>
             <span className="text-brand font-mono text-xs tracking-[0.3em] uppercase">[ Passo 03 ]</span>
+            <h1 className="font-display text-5xl md:text-6xl font-black uppercase tracking-tighter mt-3 mb-4">
+              Defina sua <span className="text-brand italic">senha</span> e escolha a camiseta
+            </h1>
+            <p className="text-muted-foreground mb-10">
+              Para concluir sua inscriÃ§Ã£o, cadastre uma senha para a Ã¡rea do atleta e selecione o tamanho da camiseta.
+            </p>
+
+            <form onSubmit={handleSubmitShirt} className="space-y-8" noValidate>
+              <FieldGrid>
+                <Field label="Senha" error={errors.password} className="md:col-span-2">
+                  <input
+                    type="password"
+                    value={form.password ?? ""}
+                    onChange={(e) => set("password", e.target.value)}
+                    className={inputCls}
+                    minLength={6}
+                  />
+                </Field>
+                <Field label="Tamanho da camiseta" error={errors.shirtSize} className="md:col-span-2">
+                  <select
+                    value={form.shirtSize ?? ""}
+                    onChange={(e) => set("shirtSize", e.target.value as AthleteData["shirtSize"])}
+                    className={inputCls}
+                  >
+                    <option value="">Selecione</option>
+                    <option value="P">P</option>
+                    <option value="M">M</option>
+                    <option value="G">G</option>
+                    <option value="GG">GG</option>
+                  </select>
+                </Field>
+                {isDuo && (
+                  <Field label="Tamanho da camiseta do segundo atleta" error={errors.participant2ShirtSize} className="md:col-span-2">
+                    <select
+                      value={form.participant2ShirtSize ?? ""}
+                      onChange={(e) => set("participant2ShirtSize", e.target.value as AthleteData["participant2ShirtSize"])}
+                      className={inputCls}
+                    >
+                      <option value="">Selecione</option>
+                      <option value="P">P</option>
+                      <option value="M">M</option>
+                      <option value="G">G</option>
+                      <option value="GG">GG</option>
+                    </select>
+                  </Field>
+                )}
+              </FieldGrid>
+
+              <div className="flex flex-col-reverse sm:flex-row gap-4 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setStep(2)}
+                  className="px-8 py-4 text-xs font-black uppercase tracking-widest border border-border hover:bg-foreground hover:text-background transition-all cursor-pointer"
+                >
+                  ← Voltar
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-4 text-xs font-black uppercase tracking-widest bg-brand text-brand-foreground hover:brightness-110 transition-all cursor-pointer"
+                >
+                  Continuar →
+                </button>
+              </div>
+            </form>
+          </section>
+        )}
+
+        {step === 4 && cat && (
+          <section>
+            <span className="text-brand font-mono text-xs tracking-[0.3em] uppercase">[ Passo 04 ]</span>
             <h1 className="font-display text-5xl md:text-6xl font-black uppercase tracking-tighter mt-3 mb-10">
-              Confirme sua <span className="text-brand italic">inscrição</span>
+              Confirme sua <span className="text-brand italic">inscriÃ§Ã£o</span>
             </h1>
 
             <div className="border border-border p-8 mb-6">
@@ -425,14 +569,17 @@ function InscricaoPage() {
               </div>
 
               <dl className="grid sm:grid-cols-2 gap-x-8 gap-y-4 text-sm">
-                <SummaryItem label="Atleta" value={form.fullName} />
-                <SummaryItem label="CPF" value={form.cpf} />
-                <SummaryItem label="Nascimento" value={form.birthDate} />
+                <SummaryItem label="Atleta 1" value={form.fullName} />
                 <SummaryItem label="E-mail" value={form.email} />
-                <SummaryItem label="Telefone" value={form.phone} />
-                <SummaryItem label="Camisa" value={form.shirtSize} />
-                <SummaryItem label="Emergência" value={`${form.emergencyName} — ${form.emergencyPhone}`} />
-                {form.teamName ? <SummaryItem label="Equipe" value={form.teamName} /> : null}
+                <SummaryItem label="CPF 1" value={form.cpf} />
+                <SummaryItem label="Data nasc 1" value={form.birthDate} />
+                <SummaryItem label="Grupo" value={form.group} />
+                <SummaryItem label="WhatsApp" value={form.phone} />
+                <SummaryItem label="Camiseta 1" value={form.shirtSize} />
+                {isDuo && <SummaryItem label="Atleta 2" value={form.participant2FullName} />}
+                {isDuo && <SummaryItem label="CPF 2" value={form.participant2Cpf} />}
+                {isDuo && <SummaryItem label="Data nasc 2" value={form.participant2BirthDate} />}
+                {isDuo && <SummaryItem label="Camiseta 2" value={form.participant2ShirtSize} />}
               </dl>
             </div>
 
@@ -499,7 +646,9 @@ function SummaryItem({ label, value }: { label: string; value?: string }) {
       <dt className="font-mono text-[10px] tracking-[0.2em] uppercase text-muted-foreground">
         {label}
       </dt>
-      <dd className="text-foreground font-medium">{value || "—"}</dd>
+      <dd className="text-foreground font-medium">{value || "â€”"}</dd>
     </div>
   );
 }
+
+
