@@ -81,13 +81,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "description",
         content:
-          "8 km. 25 obstáculos. 1 missão. A corrida de obstáculos mais extrema do Brasil. Inscreva-se agora.",
+          "8 km. 30 obstáculos. 1 missão. A corrida de obstáculos mais extrema do Brasil. Inscreva-se agora.",
       },
       { property: "og:title", content: "Extreme Race — Você contra seus próprios limites" },
       {
         property: "og:description",
         content:
-          "8 km. 25 obstáculos. 1 missão. A corrida de obstáculos mais extrema do Brasil.",
+          "8 km. 30 obstáculos. 1 missão. A corrida de obstáculos mais extrema do Brasil.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

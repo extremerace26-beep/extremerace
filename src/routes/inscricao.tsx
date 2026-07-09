@@ -6,19 +6,31 @@ import logo from "@/assets/logo.png";
 type ShirtSize = "P" | "M" | "G" | "GG";
 
 type CategoryId =
-  | "individual"
-  | "grupos"
-  | "dupla"
-  | "economica";
+  | "elitePro"
+  | "intermediario"
+  | "master"
+  | "senior"
+  | "senior2"
+  | "iniciante"
+  | "open"
+  | "teens"
+  | "superKids"
+  | "kids"
+  | "pcd"
+  | "duplaMasc"
+  | "duplaFemi"
+  | "mista";
 
-const DUO_CATEGORIES = ["dupla"] as const;
+const DUO_CATEGORIES = ["duplaMasc", "duplaFemi", "mista"] as const;
 
 type DuoCategoryId = (typeof DUO_CATEGORIES)[number];
 
-const CATEGORY_CHECKOUT_LINKS: Record<CategoryId, string> = {
-  individual: "https://loja.infinitepay.io/bwg/jcc6942-inscricao-lote-1-extreme-race",
-  grupos: "https://loja.infinitepay.io/bwg/dnr1928-extreme-race-v-lote-promocional",
-  dupla: "https://loja.infinitepay.io/bwg/vzp3441-inscricao-em-dupla",
+const CATEGORY_CHECKOUT_LINKS: Partial<Record<CategoryId, string>> = {
+  elitePro: "https://loja.infinitepay.io/bwg/jcc6942-inscricao-lote-1-extreme-race",
+  intermediario: "https://loja.infinitepay.io/bwg/dnr1928-extreme-race-v-lote-promocional",
+  duplaMasc: "https://loja.infinitepay.io/bwg/vzp3441-inscricao-em-dupla",
+  duplaFemi: "https://loja.infinitepay.io/bwg/vzp3441-inscricao-em-dupla",
+  mista: "https://loja.infinitepay.io/bwg/vzp3441-inscricao-em-dupla",
   economica: "https://loja.infinitepay.io/bwg/xip1831-inscricao-sem-blusa-economica",
 };
 
@@ -29,38 +41,123 @@ const CATEGORIES: Record<CategoryId, {
   priceLabel: string;
   description: string;
 }> = {
-  individual: {
-    id: "individual",
-    name: "INSCRIÇÃO INDIVIDUAL",
-    price: 129.9,
-    priceLabel: "R$ 129,90",
-    description: "Categoria individual com camiseta e chip.",
+  elitePro: {
+    id: "elitePro",
+    name: "ELITE PRO 5KM",
+    price: 0,
+    priceLabel: "R$ a definir",
+    description: "Com premiação em dinheiro.",
   },
-  grupos: {
-    id: "grupos",
-    name: "DESCONTO PARA GRUPOS",
-    price: 119.9,
-    priceLabel: "R$ 119,90",
-    description: "Valor por atleta para inscrições em grupo.",
+  intermediario: {
+    id: "intermediario",
+    name: "INTERMEDIÁRIO 5KM",
+    price: 0,
+    priceLabel: "R$ a definir",
+    description: "Categoria para atletas intermediários.",
   },
-  dupla: {
-    id: "dupla",
-    name: "INSCRIÇÃO EM DUPLA",
-    price: 239.98,
-    priceLabel: "R$ 239,98",
-    description: "Dupla masculina, feminina ou mista em categoria open.",
+  master: {
+    id: "master",
+    name: "MÁSTER 5KM 40+",
+    price: 0,
+    priceLabel: "R$ a definir",
+    description: "Atletas de 40 a 49 anos.",
   },
-  economica: {
-    id: "economica",
-    name: "INSCRIÇÃO ECONÔMICA",
-    price: 90,
-    priceLabel: "R$ 90,00",
-    description: "Opção econômica sem camiseta oficial.",
+  senior: {
+    id: "senior",
+    name: "SÊNIOR 5KM 50+",
+    price: 0,
+    priceLabel: "R$ a definir",
+    description: "Atletas de 50 a 59 anos.",
+  },
+  senior2: {
+    id: "senior2",
+    name: "SÊNIOR 2 5KM 60+",
+    price: 0,
+    priceLabel: "R$ a definir",
+    description: "Atletas de 60 anos ou mais.",
+  },
+  iniciante: {
+    id: "iniciante",
+    name: "INICIANTE 3KM",
+    price: 0,
+    priceLabel: "R$ a definir",
+    description: "Destinado a participantes de todas as idades que estão estreando ou novatos.",
+  },
+  open: {
+    id: "open",
+    name: "OPEN 5KM",
+    price: 0,
+    priceLabel: "R$ a definir",
+    description: "Participação sem competitividade; sem chip, com medalha e sem pódio.",
+  },
+  teens: {
+    id: "teens",
+    name: "TEENS 3KM",
+    price: 0,
+    priceLabel: "R$ a definir",
+    description: "Destinado a participantes de 13 a 17 anos.",
+  },
+  superKids: {
+    id: "superKids",
+    name: "SUPER KIDS 1KM",
+    price: 0,
+    priceLabel: "R$ a definir",
+    description: "Para crianças de 9 a 12 anos.",
+  },
+  kids: {
+    id: "kids",
+    name: "KIDS 400M",
+    price: 0,
+    priceLabel: "R$ a definir",
+    description: "Para crianças de 5 a 8 anos.",
+  },
+  pcd: {
+    id: "pcd",
+    name: "PCD",
+    price: 0,
+    priceLabel: "R$ a definir",
+    description: "Categoria destinada a pessoas com deficiência.",
+  },
+  duplaMasc: {
+    id: "duplaMasc",
+    name: "DUPLA MASCULINA (OPEN) 5KM",
+    price: 0,
+    priceLabel: "R$ a definir",
+    description: "Dupla masculina em categoria open.",
+  },
+  duplaFemi: {
+    id: "duplaFemi",
+    name: "DUPLA FEMININA (OPEN) 5KM",
+    price: 0,
+    priceLabel: "R$ a definir",
+    description: "Dupla feminina em categoria open.",
+  },
+  mista: {
+    id: "mista",
+    name: "MISTA (OPEN) 5KM",
+    price: 0,
+    priceLabel: "R$ a definir",
+    description: "Dupla mista em categoria open.",
   },
 };
 
 const searchSchema = z.object({
-  categoria: z.enum(["individual", "grupos", "dupla", "economica"]).optional(),
+  categoria: z.enum([
+    "elitePro",
+    "intermediario",
+    "master",
+    "senior",
+    "senior2",
+    "iniciante",
+    "open",
+    "teens",
+    "superKids",
+    "kids",
+    "pcd",
+    "duplaMasc",
+    "duplaFemi",
+    "mista",
+  ]).optional(),
 });
 
 export const Route = createFileRoute("/inscricao")({

@@ -57,7 +57,7 @@ const schedule = [
 const faqs = [
   {
     q: "Como funciona a Extreme Race?",
-    a: "São 8 km de percurso com 25 obstáculos espalhados pela rota. Você escolhe a categoria, larga em onda e tem que cruzar a linha de chegada — não importa como.",
+    a: "São 8 km de percurso com 30 obstáculos espalhados pela rota. Você escolhe a categoria, larga em onda e tem que cruzar a linha de chegada — não importa como.",
   },
   {
     q: "Posso trocar a titularidade da inscrição?",
@@ -202,7 +202,7 @@ function ExtremeRace() {
                 O Desafio
               </h2>
               <p className="mt-4 text-muted-foreground max-w-md">
-                Vinte e cinco obstáculos de dor, técnica e coragem. Aqui está uma amostra do que te espera.
+                Trinta obstáculos de dor, técnica e coragem. Aqui está uma amostra do que te espera.
               </p>
             </div>
             <a
@@ -229,7 +229,7 @@ function ExtremeRace() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
                 <div className="absolute top-6 left-6 font-mono text-xs text-brand tracking-widest">
-                  0{idx + 1} / 25
+                  0{idx + 1} / 30
                 </div>
                 <div className="absolute inset-x-0 bottom-0 p-8 flex flex-col">
                   <h3 className="font-display text-3xl md:text-4xl font-black uppercase tracking-tight">
