@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.png";
+import { getCheckoutLinkByCategoryId } from "@/lib/checkout-links";
 
 type Payload = {
   category: { id: string; name: string; price: number; priceLabel: string };
@@ -166,7 +167,12 @@ function CheckoutPage() {
         }
       }
 
-      window.location.assign("https://loja.infinitepay.io/bwg/dnr1928-extreme-race-v-lote-promocional");
+      const checkoutLink = getCheckoutLinkByCategoryId(data.category.id);
+      if (checkoutLink) {
+        window.open(checkoutLink, "_blank", "noopener,noreferrer");
+      } else {
+        setError("Nenhum checkout disponível para esta categoria.");
+      }
     } catch (error) {
       console.error("[Checkout] preference creation failed", error);
       setError(error instanceof Error ? error.message : "Erro ao iniciar o pagamento.");

@@ -9,6 +9,8 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermoResponsabilidadeRouteImport } from './routes/termo-responsabilidade'
+import { Route as RegulamentoRouteImport } from './routes/regulamento'
 import { Route as InscricaoRouteImport } from './routes/inscricao'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -19,8 +21,20 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as ApiPublicSetupAdminRouteImport } from './routes/api/public/setup-admin'
 import { Route as ApiPublicSeedTestUserRouteImport } from './routes/api/public/seed-test-user'
 import { Route as ApiPublicSeedAdminPasswordRouteImport } from './routes/api/public/seed-admin-password'
+import { Route as ApiPublicGetRegistrationRouteImport } from './routes/api/public/get-registration'
+import { Route as ApiPublicCreateRegistrationRouteImport } from './routes/api/public/create-registration'
 import { Route as ApiPublicCreatePreferenceRouteImport } from './routes/api/public/create-preference'
 
+const TermoResponsabilidadeRoute = TermoResponsabilidadeRouteImport.update({
+  id: '/termo-responsabilidade',
+  path: '/termo-responsabilidade',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegulamentoRoute = RegulamentoRouteImport.update({
+  id: '/regulamento',
+  path: '/regulamento',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const InscricaoRoute = InscricaoRouteImport.update({
   id: '/inscricao',
   path: '/inscricao',
@@ -71,6 +85,18 @@ const ApiPublicSeedAdminPasswordRoute =
     path: '/api/public/seed-admin-password',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicGetRegistrationRoute =
+  ApiPublicGetRegistrationRouteImport.update({
+    id: '/api/public/get-registration',
+    path: '/api/public/get-registration',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicCreateRegistrationRoute =
+  ApiPublicCreateRegistrationRouteImport.update({
+    id: '/api/public/create-registration',
+    path: '/api/public/create-registration',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicCreatePreferenceRoute =
   ApiPublicCreatePreferenceRouteImport.update({
     id: '/api/public/create-preference',
@@ -83,9 +109,13 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/checkout': typeof CheckoutRoute
   '/inscricao': typeof InscricaoRoute
+  '/regulamento': typeof RegulamentoRoute
+  '/termo-responsabilidade': typeof TermoResponsabilidadeRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/minha-conta': typeof AuthenticatedMinhaContaRoute
   '/api/public/create-preference': typeof ApiPublicCreatePreferenceRoute
+  '/api/public/create-registration': typeof ApiPublicCreateRegistrationRoute
+  '/api/public/get-registration': typeof ApiPublicGetRegistrationRoute
   '/api/public/seed-admin-password': typeof ApiPublicSeedAdminPasswordRoute
   '/api/public/seed-test-user': typeof ApiPublicSeedTestUserRoute
   '/api/public/setup-admin': typeof ApiPublicSetupAdminRoute
@@ -95,9 +125,13 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/checkout': typeof CheckoutRoute
   '/inscricao': typeof InscricaoRoute
+  '/regulamento': typeof RegulamentoRoute
+  '/termo-responsabilidade': typeof TermoResponsabilidadeRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/minha-conta': typeof AuthenticatedMinhaContaRoute
   '/api/public/create-preference': typeof ApiPublicCreatePreferenceRoute
+  '/api/public/create-registration': typeof ApiPublicCreateRegistrationRoute
+  '/api/public/get-registration': typeof ApiPublicGetRegistrationRoute
   '/api/public/seed-admin-password': typeof ApiPublicSeedAdminPasswordRoute
   '/api/public/seed-test-user': typeof ApiPublicSeedTestUserRoute
   '/api/public/setup-admin': typeof ApiPublicSetupAdminRoute
@@ -109,9 +143,13 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/checkout': typeof CheckoutRoute
   '/inscricao': typeof InscricaoRoute
+  '/regulamento': typeof RegulamentoRoute
+  '/termo-responsabilidade': typeof TermoResponsabilidadeRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/minha-conta': typeof AuthenticatedMinhaContaRoute
   '/api/public/create-preference': typeof ApiPublicCreatePreferenceRoute
+  '/api/public/create-registration': typeof ApiPublicCreateRegistrationRoute
+  '/api/public/get-registration': typeof ApiPublicGetRegistrationRoute
   '/api/public/seed-admin-password': typeof ApiPublicSeedAdminPasswordRoute
   '/api/public/seed-test-user': typeof ApiPublicSeedTestUserRoute
   '/api/public/setup-admin': typeof ApiPublicSetupAdminRoute
@@ -123,9 +161,13 @@ export interface FileRouteTypes {
     | '/auth'
     | '/checkout'
     | '/inscricao'
+    | '/regulamento'
+    | '/termo-responsabilidade'
     | '/admin'
     | '/minha-conta'
     | '/api/public/create-preference'
+    | '/api/public/create-registration'
+    | '/api/public/get-registration'
     | '/api/public/seed-admin-password'
     | '/api/public/seed-test-user'
     | '/api/public/setup-admin'
@@ -135,9 +177,13 @@ export interface FileRouteTypes {
     | '/auth'
     | '/checkout'
     | '/inscricao'
+    | '/regulamento'
+    | '/termo-responsabilidade'
     | '/admin'
     | '/minha-conta'
     | '/api/public/create-preference'
+    | '/api/public/create-registration'
+    | '/api/public/get-registration'
     | '/api/public/seed-admin-password'
     | '/api/public/seed-test-user'
     | '/api/public/setup-admin'
@@ -148,9 +194,13 @@ export interface FileRouteTypes {
     | '/auth'
     | '/checkout'
     | '/inscricao'
+    | '/regulamento'
+    | '/termo-responsabilidade'
     | '/_authenticated/admin'
     | '/_authenticated/minha-conta'
     | '/api/public/create-preference'
+    | '/api/public/create-registration'
+    | '/api/public/get-registration'
     | '/api/public/seed-admin-password'
     | '/api/public/seed-test-user'
     | '/api/public/setup-admin'
@@ -162,7 +212,11 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   CheckoutRoute: typeof CheckoutRoute
   InscricaoRoute: typeof InscricaoRoute
+  RegulamentoRoute: typeof RegulamentoRoute
+  TermoResponsabilidadeRoute: typeof TermoResponsabilidadeRoute
   ApiPublicCreatePreferenceRoute: typeof ApiPublicCreatePreferenceRoute
+  ApiPublicCreateRegistrationRoute: typeof ApiPublicCreateRegistrationRoute
+  ApiPublicGetRegistrationRoute: typeof ApiPublicGetRegistrationRoute
   ApiPublicSeedAdminPasswordRoute: typeof ApiPublicSeedAdminPasswordRoute
   ApiPublicSeedTestUserRoute: typeof ApiPublicSeedTestUserRoute
   ApiPublicSetupAdminRoute: typeof ApiPublicSetupAdminRoute
@@ -170,6 +224,20 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/termo-responsabilidade': {
+      id: '/termo-responsabilidade'
+      path: '/termo-responsabilidade'
+      fullPath: '/termo-responsabilidade'
+      preLoaderRoute: typeof TermoResponsabilidadeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/regulamento': {
+      id: '/regulamento'
+      path: '/regulamento'
+      fullPath: '/regulamento'
+      preLoaderRoute: typeof RegulamentoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/inscricao': {
       id: '/inscricao'
       path: '/inscricao'
@@ -240,6 +308,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSeedAdminPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/get-registration': {
+      id: '/api/public/get-registration'
+      path: '/api/public/get-registration'
+      fullPath: '/api/public/get-registration'
+      preLoaderRoute: typeof ApiPublicGetRegistrationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/create-registration': {
+      id: '/api/public/create-registration'
+      path: '/api/public/create-registration'
+      fullPath: '/api/public/create-registration'
+      preLoaderRoute: typeof ApiPublicCreateRegistrationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/create-preference': {
       id: '/api/public/create-preference'
       path: '/api/public/create-preference'
@@ -269,7 +351,11 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   CheckoutRoute: CheckoutRoute,
   InscricaoRoute: InscricaoRoute,
+  RegulamentoRoute: RegulamentoRoute,
+  TermoResponsabilidadeRoute: TermoResponsabilidadeRoute,
   ApiPublicCreatePreferenceRoute: ApiPublicCreatePreferenceRoute,
+  ApiPublicCreateRegistrationRoute: ApiPublicCreateRegistrationRoute,
+  ApiPublicGetRegistrationRoute: ApiPublicGetRegistrationRoute,
   ApiPublicSeedAdminPasswordRoute: ApiPublicSeedAdminPasswordRoute,
   ApiPublicSeedTestUserRoute: ApiPublicSeedTestUserRoute,
   ApiPublicSetupAdminRoute: ApiPublicSetupAdminRoute,

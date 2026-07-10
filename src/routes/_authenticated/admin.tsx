@@ -414,7 +414,15 @@ function AdminPage() {
                       <div>{new Date(r.created_at).toLocaleTimeString("pt-BR")}</div>
                     </td>
                     <td className="p-3">
-                      <StatusBadge status={r.payment_status} />
+                      <select
+                        value={r.payment_status}
+                        onChange={(e) => updateStatus(r.id, e.target.value as AdminRegistration["payment_status"])}
+                        className="w-full bg-background border border-border text-sm text-foreground px-3 py-2 rounded-lg focus:outline-none focus:border-brand"
+                      >
+                        <option value="paid">Pago</option>
+                        <option value="pending">Pendente</option>
+                        <option value="cancelled">Cancelado</option>
+                      </select>
                     </td>
                     <td className="p-3">
                       <div className="flex flex-col gap-1 items-end">

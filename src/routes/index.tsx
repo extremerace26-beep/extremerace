@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import logo from "@/assets/logo.png";
+import { CHECKOUT_LINKS } from "@/lib/checkout-links";
 import heroImage from "@/assets/hero-race.jpg";
 import obstacleQuebraPeito from "@/assets/obstacle-quebra-peito.jpg";
 import obstacleFire from "@/assets/obstacle-fire.jpg";
@@ -94,7 +95,7 @@ function ExtremeRace() {
           </a>
           <div className="hidden md:flex items-center gap-8 text-xs font-semibold tracking-widest uppercase text-muted-foreground">
             <a href="#desafio" className="hover:text-brand transition-colors">Obstáculos</a>
-            <a href="#categorias" className="hover:text-brand transition-colors">Categorias</a>
+            <a href="#categorias" className="hover:text-brand transition-colors">Inscrição</a>
             <a href="#cronograma" className="hover:text-brand transition-colors">Cronograma</a>
             <a href="#faq" className="hover:text-brand transition-colors">FAQ</a>
           </div>
@@ -105,12 +106,12 @@ function ExtremeRace() {
             >
               Entrar
             </Link>
-            <Link
-              to="/inscricao"
+            <a
+              href="#categorias"
               className="bg-brand text-brand-foreground text-xs font-bold px-5 py-2.5 hover:brightness-110 transition-all uppercase tracking-widest"
             >
               Inscrição
-            </Link>
+            </a>
           </div>
         </div>
       </nav>
@@ -147,12 +148,12 @@ function ExtremeRace() {
           </p>
 
           <div className="mt-12 flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              to="/inscricao"
+            <a
+              href="#categorias"
               className="bg-brand text-brand-foreground px-10 py-5 text-base font-black uppercase tracking-widest hover:brightness-110 transition-all"
             >
               Fazer Inscrição
-            </Link>
+            </a>
             <a
               href="#desafio"
               className="bg-transparent border border-border text-foreground px-10 py-5 text-base font-black uppercase tracking-widest hover:bg-foreground hover:text-background transition-colors"
@@ -171,8 +172,8 @@ function ExtremeRace() {
       <section className="py-20 md:py-28 border-y border-border bg-surface/30">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-10 md:gap-12">
           {[
-            { value: "8KM", label: "Percurso", brand: true },
-            { value: "25", label: "Obstáculos" },
+            { value: "5KM", label: "Percurso", brand: true },
+            { value: "30", label: "Obstáculos" },
             { value: "1K+", label: "Atletas" },
             { value: "01", label: "Missão", brand: true },
           ].map((stat) => (
@@ -355,6 +356,7 @@ function ExtremeRace() {
 
               <Link
                 to="/inscricao"
+                search={{ modalidade: "individual" }}
                 className="w-full py-4 bg-brand text-brand-foreground text-sm font-black uppercase tracking-widest hover:brightness-110 hover:shadow-[0_0_15px_rgba(102,243,102,0.4)] transition-all text-center rounded-lg shrink-0"
               >
                 Inscrever-se
@@ -423,6 +425,7 @@ function ExtremeRace() {
 
               <Link
                 to="/inscricao"
+                search={{ modalidade: "grupo" }}
                 className="w-full py-4 bg-brand text-brand-foreground text-sm font-black uppercase tracking-widest hover:brightness-110 hover:shadow-[0_0_15px_rgba(102,243,102,0.4)] transition-all text-center rounded-lg shrink-0 flex items-center justify-center gap-2"
               >
                 <span>Inscrever-se</span>
@@ -481,6 +484,7 @@ function ExtremeRace() {
 
               <Link
                 to="/inscricao"
+                search={{ modalidade: "dupla" }}
                 className="w-full py-4 bg-brand text-brand-foreground text-sm font-black uppercase tracking-widest hover:brightness-110 hover:shadow-[0_0_15px_rgba(102,243,102,0.4)] transition-all text-center rounded-lg shrink-0"
               >
                 Inscrever dupla
@@ -543,6 +547,7 @@ function ExtremeRace() {
 
               <Link
                 to="/inscricao"
+                search={{ modalidade: "economica" }}
                 className="w-full py-4 bg-brand text-brand-foreground text-sm font-black uppercase tracking-widest hover:brightness-110 hover:shadow-[0_0_15px_rgba(102,243,102,0.4)] transition-all text-center rounded-lg shrink-0"
               >
                 Inscrever-se

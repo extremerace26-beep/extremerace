@@ -2,8 +2,9 @@
 import { useState } from "react";
 import { z } from "zod";
 import logo from "@/assets/logo.png";
+import { getCheckoutLinkByCategoryId } from "@/lib/checkout-links";
 
-type ShirtSize = "P" | "M" | "G" | "GG";
+type ShirtSize = "P" | "M" | "G" | "GG" | "XGG" | "Sem camiseta";
 
 type CategoryId =
   | "elitePro"
@@ -21,18 +22,42 @@ type CategoryId =
   | "duplaFemi"
   | "mista";
 
+type Modalidade = "individual" | "grupo" | "dupla" | "economica";
+
+const MODALIDADES: Array<{ id: Modalidade; title: string; description: string; price: string; subtitle: string }> = [
+  {
+    id: "individual",
+    title: "Inscrição Individual",
+    description: "Camiseta oficial, medalha e chip.",
+    price: "R$ 129,90",
+    subtitle: "Lote até 30/07/2026",
+  },
+  {
+    id: "grupo",
+    title: "Inscrição com Desconto",
+    description: "Preço por atleta em grupo grande.",
+    price: "R$ 119,90",
+    subtitle: "Por atleta",
+  },
+  {
+    id: "dupla",
+    title: "Inscrição em Dupla",
+    description: "Dupla masculina, feminina ou mista.",
+    price: "R$ 239,98",
+    subtitle: "Valor referente à dupla",
+  },
+  {
+    id: "economica",
+    title: "Inscrição Econômica",
+    description: "Sem camiseta oficial para preço reduzido.",
+    price: "R$ 90,00",
+    subtitle: "Lote até 11/07/2026",
+  },
+];
+
 const DUO_CATEGORIES = ["duplaMasc", "duplaFemi", "mista"] as const;
 
 type DuoCategoryId = (typeof DUO_CATEGORIES)[number];
-
-const CATEGORY_CHECKOUT_LINKS: Partial<Record<CategoryId, string>> = {
-  elitePro: "https://loja.infinitepay.io/bwg/jcc6942-inscricao-lote-1-extreme-race",
-  intermediario: "https://loja.infinitepay.io/bwg/dnr1928-extreme-race-v-lote-promocional",
-  duplaMasc: "https://loja.infinitepay.io/bwg/vzp3441-inscricao-em-dupla",
-  duplaFemi: "https://loja.infinitepay.io/bwg/vzp3441-inscricao-em-dupla",
-  mista: "https://loja.infinitepay.io/bwg/vzp3441-inscricao-em-dupla",
-  economica: "https://loja.infinitepay.io/bwg/xip1831-inscricao-sem-blusa-economica",
-};
 
 const CATEGORIES: Record<CategoryId, {
   id: CategoryId;
@@ -179,11 +204,21 @@ const athleteBaseSchema = z.object({
     const d = new Date(v);
     if (Number.isNaN(d.getTime())) return false;
     const age = (Date.now() - d.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
-    return age >= 16 && age <= 90;
-  }, "Idade mínima 16 anos"),
-  group: z.enum(["Equipe", "Box", "Academia", "Studio"], { message: "Selecione" }),
+    return age >= 5 && age <= 90;
+  }, "Idade mínima 5 anos"),
+  teamName: z.string().trim().min(2, "Informe o nome da sua equipe").max(120),
+  street: z.string().trim().min(3, "Informe a rua").max(120),
+  streetNumber: z.string().trim().min(1, "Informe o número").max(20),
+  complement: z.string().trim().max(120).optional(),
+  neighborhood: z.string().trim().min(2, "Informe o bairro").max(120),
+  city: z.string().trim().min(2, "Informe a cidade").max(120),
+  state: z.string().trim().min(2, "Informe o estado").max(120),
+  zipCode: z.string().trim().min(8, "Informe o CEP").max(10, "CEP inválido"),
+  emergencyName: z.string().trim().min(3, "Informe o nome do contato de emergência").max(120),
+  emergencyPhone: z.string().trim().min(10, "Telefone de emergência inválido").max(20),
+  observation: z.string().trim().max(500).optional(),
   phone: z.string().trim().min(10, "Telefone inválido").max(20),
-  acceptTerms: z.literal(true, { message: "Você precisa aceitar o regulamento" }),
+  acceptTerms: z.literal(true, { message: "Você precisa aceitar o regulamento e os termos" }),
 });
 
 const duoParticipantSchema = z.object({
@@ -193,13 +228,13 @@ const duoParticipantSchema = z.object({
     const d = new Date(v);
     if (Number.isNaN(d.getTime())) return false;
     const age = (Date.now() - d.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
-    return age >= 16 && age <= 90;
-  }, "Idade mínima 16 anos"),
+    return age >= 5 && age <= 90;
+  }, "Idade mínima 5 anos"),
 });
 
 const passwordAndShirtSchema = z.object({
   password: z.string().min(6, "Senha com no mínimo 6 caracteres"),
-  shirtSize: z.enum(["P", "M", "G", "GG"] as const),
+  shirtSize: z.enum(["P", "M", "G", "GG", "XGG", "Sem camiseta"] as const),
 });
 
 const duoPasswordAndShirtSchema = passwordAndShirtSchema.extend({
@@ -290,9 +325,9 @@ function InscricaoPage() {
 
       if (typeof window !== "undefined") {
         sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-        const checkoutLink = CATEGORY_CHECKOUT_LINKS[cat.id];
+        const checkoutLink = getCheckoutLinkByCategoryId(cat.id);
         if (checkoutLink) {
-          window.location.assign(checkoutLink);
+          window.open(checkoutLink, "_blank", "noopener,noreferrer");
           return;
         }
 
@@ -430,7 +465,7 @@ function InscricaoPage() {
                 onClick={() => setStep(1)}
                 className="text-foreground font-bold underline underline-offset-4 hover:text-brand cursor-pointer"
               >
-                {cat.name} â€” {cat.priceLabel}
+                {cat.name} — {cat.priceLabel}
               </button>
             </p>
 
@@ -472,18 +507,14 @@ function InscricaoPage() {
                     autoComplete="email"
                   />
                 </Field>
-                <Field label="Grupo" error={errors.group}>
-                  <select
-                    value={form.group ?? ""}
-                    onChange={(e) => set("group", e.target.value as AthleteData["group"])}
+                <Field label="Equipe / Assessoria" error={errors.teamName}>
+                  <input
+                    type="text"
+                    placeholder="Nome da sua equipe"
+                    value={form.teamName ?? ""}
+                    onChange={(e) => set("teamName", e.target.value)}
                     className={inputCls}
-                  >
-                    <option value="">Selecione</option>
-                    <option value="Equipe">Equipe</option>
-                    <option value="Box">Box</option>
-                    <option value="Academia">Academia</option>
-                    <option value="Studio">Studio</option>
-                  </select>
+                  />
                 </Field>
                 <Field label="WhatsApp" error={errors.phone}>
                   <input
@@ -493,6 +524,89 @@ function InscricaoPage() {
                     onChange={(e) => set("phone", e.target.value)}
                     className={inputCls}
                     autoComplete="tel"
+                  />
+                </Field>
+                <Field label="CEP" error={errors.zipCode}>
+                  <input
+                    type="text"
+                    placeholder="00000-000"
+                    value={form.zipCode ?? ""}
+                    onChange={(e) => set("zipCode", e.target.value)}
+                    className={inputCls}
+                  />
+                </Field>
+                <Field label="Rua" error={errors.street}>
+                  <input
+                    type="text"
+                    value={form.street ?? ""}
+                    onChange={(e) => set("street", e.target.value)}
+                    className={inputCls}
+                  />
+                </Field>
+                <Field label="Número" error={errors.streetNumber}>
+                  <input
+                    type="text"
+                    value={form.streetNumber ?? ""}
+                    onChange={(e) => set("streetNumber", e.target.value)}
+                    className={inputCls}
+                  />
+                </Field>
+                <Field label="Complemento" error={errors.complement}>
+                  <input
+                    type="text"
+                    value={form.complement ?? ""}
+                    onChange={(e) => set("complement", e.target.value)}
+                    className={inputCls}
+                  />
+                </Field>
+                <Field label="Bairro" error={errors.neighborhood}>
+                  <input
+                    type="text"
+                    value={form.neighborhood ?? ""}
+                    onChange={(e) => set("neighborhood", e.target.value)}
+                    className={inputCls}
+                  />
+                </Field>
+                <Field label="Cidade" error={errors.city}>
+                  <input
+                    type="text"
+                    value={form.city ?? ""}
+                    onChange={(e) => set("city", e.target.value)}
+                    className={inputCls}
+                  />
+                </Field>
+                <Field label="Estado" error={errors.state}>
+                  <input
+                    type="text"
+                    value={form.state ?? ""}
+                    onChange={(e) => set("state", e.target.value)}
+                    className={inputCls}
+                  />
+                </Field>
+                <Field label="Contato de emergência" error={errors.emergencyName}>
+                  <input
+                    type="text"
+                    placeholder="Nome do responsável"
+                    value={form.emergencyName ?? ""}
+                    onChange={(e) => set("emergencyName", e.target.value)}
+                    className={inputCls}
+                  />
+                </Field>
+                <Field label="Telefone de emergência" error={errors.emergencyPhone}>
+                  <input
+                    type="tel"
+                    placeholder="(11) 90000-0000"
+                    value={form.emergencyPhone ?? ""}
+                    onChange={(e) => set("emergencyPhone", e.target.value)}
+                    className={inputCls}
+                  />
+                </Field>
+                <Field label="Observação" error={errors.observation} className="md:col-span-2">
+                  <textarea
+                    value={form.observation ?? ""}
+                    onChange={(e) => set("observation", e.target.value)}
+                    className="w-full min-h-[120px] bg-background border border-border px-4 py-3 text-sm focus:outline-none focus:border-brand transition-colors"
+                    placeholder="Alguma informação complementar sobre sua inscrição"
                   />
                 </Field>
               </FieldGrid>
@@ -535,17 +649,18 @@ function InscricaoPage() {
                 </div>
               )}
 
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={form.acceptTerms === true}
-                  onChange={(e) => set("acceptTerms", e.target.checked as true)}
-                  className="mt-1 size-4 accent-brand cursor-pointer"
-                />
-                <span className="text-sm text-muted-foreground">
-                  Li e aceito o regulamento, o termo de responsabilidade e autorizo o uso da minha
-                  imagem para divulgaÃ§Ã£o do evento.
-                </span>
+              <label className="flex flex-col gap-3 cursor-pointer">
+                <div className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    checked={form.acceptTerms === true}
+                    onChange={(e) => set("acceptTerms", e.target.checked as true)}
+                    className="mt-1 size-4 accent-brand cursor-pointer"
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    Li e aceito o <a href="/regulamento" target="_blank" rel="noopener noreferrer" className="text-brand underline">regulamento</a> e o <a href="/termo-responsabilidade" target="_blank" rel="noopener noreferrer" className="text-brand underline">termo de responsabilidade</a>, e autorizo o uso da minha imagem para divulgação do evento.
+                  </span>
+                </div>
               </label>
               {errors.acceptTerms && (
                 <p className="text-destructive text-xs font-mono">{errors.acceptTerms}</p>
@@ -602,6 +717,8 @@ function InscricaoPage() {
                     <option value="M">M</option>
                     <option value="G">G</option>
                     <option value="GG">GG</option>
+                    <option value="XGG">XGG</option>
+                    <option value="Sem camiseta">Sem camiseta</option>
                   </select>
                 </Field>
                 {isDuo && (
@@ -616,6 +733,8 @@ function InscricaoPage() {
                       <option value="M">M</option>
                       <option value="G">G</option>
                       <option value="GG">GG</option>
+                      <option value="XGG">XGG</option>
+                      <option value="Sem camiseta">Sem camiseta</option>
                     </select>
                   </Field>
                 )}
@@ -694,11 +813,7 @@ function InscricaoPage() {
                 disabled={isSubmitting}
                 className="flex-1 py-4 text-xs font-black uppercase tracking-widest bg-brand text-brand-foreground hover:brightness-110 transition-all cursor-pointer disabled:opacity-60"
               >
-                {isSubmitting
-                  ? "Processando..."
-                  : cat.id === "elite"
-                    ? "Ir para pagamento →"
-                    : "Confirmar inscrição →"}
+                {isSubmitting ? "Processando..." : "Ir para pagamento →"}
               </button>
             </div>
           </section>
