@@ -18,6 +18,8 @@ type CategoryId =
   | "superKids"
   | "kids"
   | "pcd"
+  | "grupo"
+  | "economica"
   | "duplaMasc"
   | "duplaFemi"
   | "mista";
@@ -143,6 +145,20 @@ const CATEGORIES: Record<CategoryId, {
     priceLabel: "R$ a definir",
     description: "Categoria destinada a pessoas com deficiência.",
   },
+  grupo: {
+    id: "grupo",
+    name: "DESCONTO PARA GRUPOS",
+    price: 119.9,
+    priceLabel: "R$ 119,90",
+    description: "Inscrição com desconto para grupos grandes.",
+  },
+  economica: {
+    id: "economica",
+    name: "ECONÔMICA 5KM",
+    price: 90.0,
+    priceLabel: "R$ 90,00",
+    description: "Inscrição econômica sem camiseta oficial.",
+  },
   duplaMasc: {
     id: "duplaMasc",
     name: "DUPLA MASCULINA (OPEN) 5KM",
@@ -179,10 +195,12 @@ const searchSchema = z.object({
     "superKids",
     "kids",
     "pcd",
+    "grupo",
     "duplaMasc",
     "duplaFemi",
     "mista",
   ]).optional(),
+  modalidade: z.enum(["individual", "grupo", "dupla", "economica"]).optional(),
 });
 
 export const Route = createFileRoute("/inscricao")({
@@ -247,10 +265,11 @@ type AthleteData = z.infer<typeof athleteSchema>;const STORAGE_KEY = "extreme-ra
 
 function InscricaoPage() {
   const navigate = useNavigate();
-  const { categoria } = Route.useSearch();
-  const [step, setStep] = useState<1 | 2 | 3 | 4>(categoria ? 2 : 1);
-  const [selected, setSelected] = useState<CategoryId | null>(categoria ?? null);
-  const [form, setForm] = useState<Partial<AthleteData> & { categoria?: CategoryId }>({ categoria: categoria ?? undefined });
+  const { categoria, modalidade } = Route.useSearch();
+  const initialCategory = categoria ?? (modalidade === "grupo" ? "grupo" : null);
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(initialCategory ? 2 : 1);
+  const [selected, setSelected] = useState<CategoryId | null>(initialCategory);
+  const [form, setForm] = useState<Partial<AthleteData> & { categoria?: CategoryId }>({ categoria: initialCategory ?? undefined });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
@@ -658,7 +677,7 @@ function InscricaoPage() {
                     className="mt-1 size-4 accent-brand cursor-pointer"
                   />
                   <span className="text-sm text-muted-foreground">
-                    Li e aceito o <a href="/regulamento" target="_blank" rel="noopener noreferrer" className="text-brand underline">regulamento</a> e o <a href="/termo-responsabilidade" target="_blank" rel="noopener noreferrer" className="text-brand underline">termo de responsabilidade</a>, e autorizo o uso da minha imagem para divulgação do evento.
+                    Li e aceito o <a href="/regulamento.pdf" download target="_blank" rel="noopener noreferrer" className="text-brand underline">regulamento</a> e o <a href="/termo-responsabilidade.pdf" download target="_blank" rel="noopener noreferrer" className="text-brand underline">termo de responsabilidade</a>, e autorizo o uso da minha imagem para divulgação do evento.
                   </span>
                 </div>
               </label>

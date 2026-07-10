@@ -815,7 +815,7 @@ function ExtremeRace() {
           <div className="flex gap-6 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
             <a href="#" className="hover:text-brand transition-colors">Instagram</a>
             <a href="#" className="hover:text-brand transition-colors">YouTube</a>
-            <a href="#" className="hover:text-brand transition-colors">Regulamento</a>
+            <a href="/regulamento.pdf" download target="_blank" rel="noopener noreferrer" className="hover:text-brand transition-colors">Regulamento</a>
           </div>
         </div>
       </footer>
