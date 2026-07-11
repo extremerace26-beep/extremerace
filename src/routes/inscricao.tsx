@@ -272,14 +272,19 @@ function InscricaoPage() {
   const initialCategory = categoria ?? (modalidade === "grupo" ? "grupo" : null);
   const [step, setStep] = useState<1 | 2 | 3 | 4>(initialCategory ? 2 : 1);
   const [selected, setSelected] = useState<CategoryId | null>(initialCategory);
-  const [form, setForm] = useState<Partial<AthleteData> & { categoria?: CategoryId; modalidade?: Modalidade }>({ categoria: initialCategory ?? undefined, modalidade: modalidade ?? undefined });
   const [startModalidade] = useState<Modalidade | undefined>(modalidade ?? undefined);
+  const [form, setForm] = useState<Partial<AthleteData> & { categoria?: CategoryId; modalidade?: Modalidade }>({ categoria: initialCategory ?? undefined, modalidade: modalidade ?? undefined });
+  const [selectedModalidade, setSelectedModalidade] = useState<Modalidade | undefined>(modalidade ?? undefined);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
 
   const cat = form.categoria ? CATEGORIES[form.categoria] : null;
   const isDuo = cat ? (DUO_CATEGORIES as readonly CategoryId[]).includes(cat.id) : false;
+  const isEconomica = startModalidade === "economica" || cat?.id === "economica";
+  const availableCategories = startModalidade === "economica"
+    ? Object.values(CATEGORIES).filter((category) => category.id !== "economica")
+    : Object.values(CATEGORIES);
 
   const set = <K extends keyof AthleteData>(k: K, v: AthleteData[K]) => {
     setForm((f) => ({ ...f, [k]: v }));
@@ -290,6 +295,7 @@ function InscricaoPage() {
     setForm((f) => ({
       ...f,
       categoria: id,
+      modalidade: f.modalidade ?? selectedModalidade,
       ...(id === "economica" ? { shirtSize: undefined, participant2ShirtSize: undefined } : {}),
     }));
     setErrors((prev) => {
@@ -299,6 +305,22 @@ function InscricaoPage() {
     });
     setStep(2);
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function handleSelectModalidade(modalidade: Modalidade) {
+    setSelectedModalidade(modalidade);
+    setForm((f) => ({
+      ...f,
+      modalidade,
+      ...(modalidade === "grupo" ? { categoria: "grupo" } : {}),
+      ...(modalidade === "economica" ? { shirtSize: undefined, participant2ShirtSize: undefined } : {}),
+    }));
+
+    if (modalidade === "grupo") {
+      setSelected("grupo");
+      setStep(2);
+      if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   }
 
   function handleSubmitData(e: React.FormEvent) {
@@ -325,7 +347,7 @@ function InscricaoPage() {
     e.preventDefault();
     const validationSchema = isDuo
       ? duoPasswordAndShirtSchema
-      : cat?.id === "economica"
+      : isEconomica
       ? passwordSchema
       : passwordAndShirtSchema;
     const parsed = validationSchema.safeParse(form);
@@ -354,28 +376,24 @@ function InscricaoPage() {
           ? { shirtSize: undefined, participant2ShirtSize: undefined }
           : {}),
       };
+
+      const derivedModalidade =
+        form.modalidade || selectedModalidade ||
+        (cat.id === "grupo" ? "grupo" : cat.id === "economica" ? "economica" : (DUO_CATEGORIES as readonly string[]).includes(cat.id) ? "dupla" : "individual");
+
+      const checkoutLink = CHECKOUT_LINKS[derivedModalidade];
+
       const payload = {
         category: cat,
+        modalidade: derivedModalidade,
+        checkoutLink,
         athlete: athletePayload,
-        modalidade: startModalidade,
         createdAt: new Date().toISOString(),
       };
 
       if (typeof window !== "undefined") {
         sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-        let checkoutLink: string | null = null;
-        if (startModalidade) {
-          checkoutLink = CHECKOUT_LINKS[startModalidade] ?? null;
-        } else {
-          checkoutLink = getCheckoutLinkByCategoryId(cat.id);
-        }
-
-        if (checkoutLink) {
-          window.open(checkoutLink, "_blank", "noopener,noreferrer");
-          return;
-        }
-
-        navigate({ to: "/checkout", search: { status: "success" } });
+        navigate({ to: "/checkout" });
       }
     } catch (error) {
       console.error("[Checkout] preference creation failed", error);
@@ -463,7 +481,7 @@ function InscricaoPage() {
                   className={inputCls}
                 >
                   <option value="">Selecione</option>
-                  {Object.values(CATEGORIES).map((c) => (
+                  {availableCategories.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name}
                     </option>
@@ -476,7 +494,7 @@ function InscricaoPage() {
                   Categorias disponíveis
                 </p>
                 <ul className="grid gap-4 text-sm text-foreground">
-                  {Object.values(CATEGORIES).map((c) => (
+                  {availableCategories.map((c) => (
                     <li key={c.id} className="border border-border rounded px-4 py-3">
                       <div className="font-semibold">{c.name}</div>
                       <div className="text-muted-foreground text-xs">{c.description}</div>
@@ -733,10 +751,13 @@ function InscricaoPage() {
           <section>
             <span className="text-brand font-mono text-xs tracking-[0.3em] uppercase">[ Passo 03 ]</span>
             <h1 className="font-display text-5xl md:text-6xl font-black uppercase tracking-tighter mt-3 mb-4">
-              Defina sua <span className="text-brand italic">senha</span> e escolha a camiseta
+              Defina sua <span className="text-brand italic">senha</span>
+              {!isEconomica && " e escolha a camiseta"}
             </h1>
             <p className="text-muted-foreground mb-10">
-              Para concluir sua inscriÃ§Ã£o, cadastre uma senha para a Ã¡rea do atleta e selecione o tamanho da camiseta.
+              {isEconomica
+                ? "Para concluir sua inscrição, cadastre uma senha para a área do atleta. A modalidade Econômica não inclui camiseta oficial."
+                : "Para concluir sua inscrição, cadastre uma senha para a área do atleta e selecione o tamanho da camiseta."}
             </p>
 
             <form onSubmit={handleSubmitShirt} className="space-y-8" noValidate>
@@ -750,7 +771,7 @@ function InscricaoPage() {
                     minLength={6}
                   />
                 </Field>
-                {cat && cat.id !== "economica" && (
+                {!isEconomica && cat && (
                   <Field label="Tamanho da camiseta" error={errors.shirtSize} className="md:col-span-2">
                     <select
                       value={form.shirtSize ?? ""}
@@ -767,7 +788,7 @@ function InscricaoPage() {
                     </select>
                   </Field>
                 )}
-                {isDuo && cat && cat.id !== "economica" && (
+                {isDuo && !isEconomica && cat && (
                   <Field label="Tamanho da camiseta do segundo atleta" error={errors.participant2ShirtSize} className="md:col-span-2">
                     <select
                       value={form.participant2ShirtSize ?? ""}
@@ -809,40 +830,51 @@ function InscricaoPage() {
           <section>
             <span className="text-brand font-mono text-xs tracking-[0.3em] uppercase">[ Passo 04 ]</span>
             <h1 className="font-display text-5xl md:text-6xl font-black uppercase tracking-tighter mt-3 mb-10">
-              Confirme sua <span className="text-brand italic">inscriÃ§Ã£o</span>
+              Página de <span className="text-brand italic">confirmação</span>
             </h1>
 
-            <div className="border border-border p-8 mb-6">
-              <div className="flex items-baseline justify-between border-b border-border pb-6 mb-6">
-                <div>
-                  <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-muted-foreground">
-                    Categoria
-                  </span>
-                  <h2 className="font-display text-4xl font-black uppercase tracking-tight">
-                    {cat.name}
-                  </h2>
-                </div>
-                <div className="text-right">
-                  <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-muted-foreground">
-                    Total
-                  </span>
-                  <div className="font-display text-4xl font-black text-brand">{cat.priceLabel}</div>
+            <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr] mb-8">
+              <div className="border border-border p-8 rounded-xl bg-background/70">
+                <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-muted-foreground mb-3">Resumo da inscrição</p>
+                <div className="space-y-6">
+                  <div>
+                    <p className="text-muted-foreground text-xs uppercase tracking-[0.25em]">Plano</p>
+                    <p className="text-foreground font-semibold text-lg mt-2">
+                      {startModalidade ? MODALIDADES.find((m) => m.id === startModalidade)?.title ?? startModalidade : cat.name}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground text-xs uppercase tracking-[0.25em]">Categoria</p>
+                    <p className="text-foreground font-semibold text-lg mt-2">{cat.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground text-xs uppercase tracking-[0.25em]">Valor</p>
+                    <p className="text-foreground font-semibold text-lg mt-2">{cat.priceLabel}</p>
+                  </div>
+                  {startModalidade === "economica" && (
+                    <div className="rounded border border-destructive/20 bg-destructive/5 p-4">
+                      <p className="text-destructive text-sm font-semibold">Lembrete</p>
+                      <p className="text-sm text-muted-foreground mt-1">A modalidade Econômica não inclui camiseta oficial.</p>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <dl className="grid sm:grid-cols-2 gap-x-8 gap-y-4 text-sm">
-                <SummaryItem label="Atleta 1" value={form.fullName} />
-                <SummaryItem label="E-mail" value={form.email} />
-                <SummaryItem label="CPF 1" value={form.cpf} />
-                <SummaryItem label="Data nasc 1" value={form.birthDate} />
-                <SummaryItem label="Grupo" value={form.group} />
-                <SummaryItem label="WhatsApp" value={form.phone} />
-                {cat && cat.id !== "economica" && <SummaryItem label="Camiseta 1" value={form.shirtSize} />}
-                {isDuo && <SummaryItem label="Atleta 2" value={form.participant2FullName} />}
-                {isDuo && <SummaryItem label="CPF 2" value={form.participant2Cpf} />}
-                {isDuo && <SummaryItem label="Data nasc 2" value={form.participant2BirthDate} />}
-                {isDuo && cat && cat.id !== "economica" && <SummaryItem label="Camiseta 2" value={form.participant2ShirtSize} />}
-              </dl>
+              <div className="border border-border p-8 rounded-xl bg-background/70">
+                <p className="font-mono text-[10px] tracking-[0.3em] uppercase text-muted-foreground mb-3">Detalhes do atleta</p>
+                <dl className="grid gap-3 text-sm text-foreground/90">
+                  <SummaryItem label="Atleta 1" value={form.fullName} />
+                  <SummaryItem label="E-mail" value={form.email} />
+                  <SummaryItem label="CPF 1" value={form.cpf} />
+                  <SummaryItem label="Data nasc 1" value={form.birthDate} />
+                  <SummaryItem label="WhatsApp" value={form.phone} />
+                  {cat.id !== "economica" && <SummaryItem label="Camiseta 1" value={form.shirtSize} />}
+                  {isDuo && <SummaryItem label="Atleta 2" value={form.participant2FullName} />}
+                  {isDuo && <SummaryItem label="CPF 2" value={form.participant2Cpf} />}
+                  {isDuo && <SummaryItem label="Data nasc 2" value={form.participant2BirthDate} />}
+                  {isDuo && cat.id !== "economica" && <SummaryItem label="Camiseta 2" value={form.participant2ShirtSize} />}
+                </dl>
+              </div>
             </div>
 
             {paymentError && <p className="text-destructive text-xs font-mono mt-4">{paymentError}</p>}
@@ -854,6 +886,14 @@ function InscricaoPage() {
               >
                 ← Editar dados
               </button>
+
+              <Link
+                to="/auth?redirect=/inscricao"
+                className="px-8 py-4 text-xs font-black uppercase tracking-widest border border-border hover:bg-foreground hover:text-background transition-all flex items-center justify-center"
+              >
+                Entrar
+              </Link>
+
               <button
                 onClick={handleGoToCheckout}
                 disabled={isSubmitting}

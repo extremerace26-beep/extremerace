@@ -6,6 +6,7 @@ import logo from "@/assets/logo.png";
 
 const searchSchema = z.object({
   redirect: z.string().optional(),
+  returnTo: z.string().optional(),
   mode: z.enum(["signin", "signup"]).optional(),
 });
 
@@ -23,9 +24,10 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
-  const { redirect, mode: initialMode } = Route.useSearch();
+  const { redirect, returnTo, mode: initialMode } = Route.useSearch();
+  const redirectTo = redirect ?? returnTo;
   const [mode, setMode] = useState<"signin" | "signup">(
-    initialMode ?? (redirect === "/checkout" ? "signup" : "signin")
+    initialMode ?? (redirectTo === "/checkout" ? "signup" : "signin")
   );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -36,9 +38,9 @@ function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: redirect ?? "/minha-conta" });
+      if (data.session) navigate({ to: redirectTo ?? "/minha-conta" });
     });
-  }, [navigate, redirect]);
+  }, [navigate, redirectTo]);
 
   async function handleEmail(e: React.FormEvent) {
     e.preventDefault();
@@ -51,28 +53,67 @@ function AuthPage() {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}${redirect ?? "/minha-conta"}`,
+            emailRedirectTo: `${window.location.origin}${redirectTo ?? "/minha-conta"}`,
             data: { full_name: fullName },
           },
         });
-        if (error) throw error;
 
-        // Try to sign in immediately in case email confirmation is not required
-        try {
-          const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-          if (signInError) {
-            // If sign in fails (e.g., still requires confirmation), inform the user
-            setInfo("Conta criada. Verifique seu e-mail se for necessário para ativar a conta.");
-          } else {
-            navigate({ to: redirect ?? "/minha-conta" });
+        const signUpErrorMessage = error?.message?.toLowerCase() || "";
+        const signUpRateLimitError = signUpErrorMessage.includes("rate limit") || signUpErrorMessage.includes("email rate limit");
+
+        if (error && !signUpRateLimitError) throw error;
+
+        if (!error || signUpRateLimitError) {
+          if (signUpRateLimitError) {
+            console.warn("[Auth] signUp skipped due to email rate limit, falling back to server-side creation", error?.message);
           }
-        } catch (e) {
-          setInfo("Conta criada. Verifique seu e-mail se for necessário para ativar a conta.");
+
+          // Try to sign in immediately in case email confirmation is not required
+          try {
+            const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+            if (signInError) {
+              // If sign in fails (e.g., still requires confirmation), try server-side confirmed creation as fallback
+              try {
+                const resp = await fetch("/.netlify/functions/create-user-confirmed", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ email, password, athlete: { fullName } }),
+                });
+                const text = await resp.text();
+                let json: { error?: string } | null = null;
+                try {
+                  json = JSON.parse(text);
+                } catch {
+                  json = null;
+                }
+                if (!resp.ok) {
+                  const message = json?.error || text || `Falha do servidor (${resp.status})`;
+                  console.warn("create-user-confirmed failed", { status: resp.status, body: message });
+                  setError(message);
+                } else {
+                  const { error: signInAfter } = await supabase.auth.signInWithPassword({ email, password });
+                  if (signInAfter) {
+                    console.warn("signIn after create-user-confirmed failed", signInAfter);
+                    setError("Conta criada, mas login automático falhou. Tente fazer login manualmente.");
+                  } else {
+                    navigate({ to: redirectTo ?? "/minha-conta" });
+                  }
+                }
+              } catch (e) {
+                console.warn("create-user-confirmed request failed", e);
+                setError("Falha ao criar usuário automaticamente. Verifique seu e-mail ou tente novamente.");
+              }
+            } else {
+              navigate({ to: redirectTo ?? "/minha-conta" });
+            }
+          } catch (e) {
+            setInfo("Conta criada. Verifique seu e-mail se for necessário para ativar a conta.");
+          }
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate({ to: redirect ?? "/minha-conta" });
+        navigate({ to: redirectTo ?? "/minha-conta" });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao autenticar");

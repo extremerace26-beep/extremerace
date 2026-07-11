@@ -6,6 +6,8 @@ import { getCheckoutLinkByCategoryId, CHECKOUT_LINKS } from "@/lib/checkout-link
 
 type Payload = {
   category: { id: string; name: string; price: number; priceLabel: string };
+  modalidade?: string | null;
+  checkoutLink?: string | null;
   athlete: {
     fullName?: string;
     email?: string;
@@ -127,73 +129,62 @@ function CheckoutPage() {
           return;
         }
 
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        const { error: signInError } = await supabase.auth.signInWithPassword({
           email: data.athlete.email || "",
           password: data.athlete.password,
-          options: {
-            data: {
-              full_name: data.athlete.fullName,
-            },
-          },
         });
 
-        if (signUpError) {
-          if (signUpError.message.toLowerCase().includes("already exists")) {
-            const { error: signInError } = await supabase.auth.signInWithPassword({
-              email: data.athlete.email || "",
-              password: data.athlete.password,
-            });
-            if (signInError) throw signInError;
-            const { data: newSessionData } = await supabase.auth.getSession();
-            user = newSessionData.session?.user ?? null;
-          } else {
-            throw signUpError;
-          }
-        } else {
-          user = signUpData.user ?? null;
-        }
-
-        if (!user) {
-          // Try to sign in immediately in case confirmation is disabled
-          const { error: signInError } = await supabase.auth.signInWithPassword({
-            email: data.athlete.email || "",
-            password: data.athlete.password,
-          });
-          if (signInError) {
-            const { data: sessionData } = await supabase.auth.getSession();
-            user = sessionData.session?.user ?? null;
-          } else {
-            const { data: newSessionData } = await supabase.auth.getSession();
-            user = newSessionData.session?.user ?? null;
-          }
-        }
-
-        if (!user) {
-          setError(
-            "Cadastro criado. Verifique seu e-mail e faça login antes de continuar para o pagamento.",
-          );
-          setProcessing(false);
-          return;
+        if (!signInError) {
+          const { data: newSessionData } = await supabase.auth.getSession();
+          user = newSessionData.session?.user ?? null;
         }
       }
 
-      let checkoutLink: string | null = null;
-      // Prefer modality-provided checkout (set at start of flow), fall back to category mapping
-      // @ts-ignore - modalidade may be present in stored payload
-      if ((data as any).modalidade) {
-        // @ts-ignore
-        checkoutLink = CHECKOUT_LINKS[(data as any).modalidade] ?? null;
+      if (!user && !data.athlete.password) {
+        setError("Usuário não autenticado. Faça login ou informe uma senha para criar a conta automaticamente.");
+        setProcessing(false);
+        return;
       }
 
+      const requestBody: any = {
+        category: data.category,
+        modalidade: data.modalidade,
+        checkoutLink: data.checkoutLink,
+        athlete: {
+          ...data.athlete,
+          password: undefined,
+        },
+        createdAt: data.createdAt,
+        userId: user?.id,
+        registrationId: data.registrationId,
+      };
+
+      if (!user && data.athlete.password) {
+        requestBody.password = data.athlete.password;
+      }
+
+      const response = await fetch("/api/public/create-preference", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody),
+      });
+
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(result.error || "Erro ao criar registro e checkout no servidor.");
+      }
+
+      const checkoutLink =
+        result.checkoutLink || result.checkout_link || result.checkoutUrl || result.checkoutURL || null;
       if (!checkoutLink) {
-        checkoutLink = getCheckoutLinkByCategoryId(data.category.id);
+        throw new Error("Link de checkout não retornado pelo servidor.");
       }
 
-      if (checkoutLink) {
-        window.open(checkoutLink, "_blank", "noopener,noreferrer");
-      } else {
-        setError("Nenhum checkout disponível para esta categoria.");
+      if (result.registrationId) {
+        setData((current) => (current ? { ...current, registrationId: result.registrationId } : current));
       }
+
+      window.open(checkoutLink, "_blank", "noopener,noreferrer");
     } catch (error) {
       console.error("[Checkout] preference creation failed", error);
       setError(error instanceof Error ? error.message : "Erro ao iniciar o pagamento.");
@@ -273,7 +264,7 @@ function CheckoutPage() {
               Processamento seguro
             </p>
             <p className="text-sm text-muted-foreground">
-              O pagamento será realizado diretamente no ambiente do Mercado Pago para garantir mais segurança e variedade de meios de pagamento.
+              O pagamento será realizado diretamente no ambiente do Infinity Pay para garantir mais segurança e variedade de meios de pagamento.
             </p>
           </div>
 
@@ -296,7 +287,7 @@ function CheckoutPage() {
             <div id="wallet_container" className="mt-8" />
           )}
           <p className="text-center text-[10px] font-mono tracking-[0.2em] uppercase text-muted-foreground mt-4">
-            Integração Mercado Pago Checkout Pro
+            Integração Infinity Pay
           </p>
         </section>
 

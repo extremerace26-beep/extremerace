@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
+import { getCheckoutLinkByCategoryId, CHECKOUT_LINKS } from "@/lib/checkout-links";
 
 type CreatePreferencePayload = {
   category: {
@@ -8,10 +9,13 @@ type CreatePreferencePayload = {
     price: number;
     priceLabel: string;
   };
+  modalidade?: string | null;
+  checkoutLink?: string | null;
   athlete: Record<string, unknown>;
   createdAt: string;
   registrationId?: string;
   userId?: string | null;
+  password?: string | null;
 };
 
 function buildCorsHeaders() {
@@ -44,6 +48,24 @@ function getRegistrationPrice(referenceDate = new Date()) {
     }
   }
   throw new Error("Inscrições encerradas");
+}
+
+function resolveCheckoutModalidade(modalidade?: string | null, categoryId?: string | null) {
+  const normalized = String(modalidade || categoryId || "").trim().toLowerCase();
+
+  if (normalized === "economica") {
+    return "economica";
+  }
+
+  if (normalized === "grupo") {
+    return "grupo";
+  }
+
+  if (normalized === "dupla" || normalized === "duplamasc" || normalized === "duplafemi" || normalized === "mista") {
+    return "dupla";
+  }
+
+  return "individual";
 }
 
 function ensureProfile(supabaseAdmin: ReturnType<typeof createClient>, userId: string | null | undefined, athlete: Record<string, unknown>) {
@@ -94,8 +116,9 @@ export const Route = createFileRoute("/api/public/create-preference")({
           const athlete = payload.athlete || {};
           const category = payload.category || {};
           const registrationId = payload.registrationId || payload.registration_id || null;
-          const userId = payload.userId || payload.user_id || null;
+          let userId = payload.userId || payload.user_id || null;
           const createdAt = payload.createdAt || new Date().toISOString();
+          const supabaseAdmin = createSupabaseAdminClient();
 
           if (!registrationId && (!athlete.fullName || !athlete.email || !category.id)) {
             return new Response(JSON.stringify({ error: "Dados da inscrição incompletos" }), {
@@ -104,27 +127,79 @@ export const Route = createFileRoute("/api/public/create-preference")({
             });
           }
 
-          if (!registrationId && !userId) {
-            return new Response(
-              JSON.stringify({ error: "Usuário não autenticado. Faça login para continuar." }),
-              {
-                status: 400,
-                headers: { ...buildCorsHeaders(), "content-type": "application/json" },
-              },
-            );
+          let effectiveUserId = userId;
+
+          if (!registrationId && !effectiveUserId) {
+            if (!athlete.email || !payload.password) {
+              return new Response(
+                JSON.stringify({ error: "Usuário não autenticado. Faça login ou informe uma senha para criar a conta automaticamente." }),
+                {
+                  status: 400,
+                  headers: { ...buildCorsHeaders(), "content-type": "application/json" },
+                },
+              );
+            }
+
+            const email = String(athlete.email);
+            const password = String(payload.password);
+            let existingUserId: string | null = null;
+
+            const { data: existingUser, error: existingUserError } = await supabaseAdmin
+              .from("auth.users")
+              .select("id")
+              .eq("email", email)
+              .maybeSingle();
+
+            if (existingUser?.id) {
+              existingUserId = existingUser.id;
+            }
+
+            if (existingUserError) {
+              console.warn("[Infinity Pay] failed to look up existing user by email", existingUserError);
+            }
+
+            if (existingUserId) {
+              effectiveUserId = existingUserId;
+            } else {
+              const { data: userCreateData, error: userCreateError } = await supabaseAdmin.auth.admin.createUser({
+                email,
+                password,
+                email_confirm: true,
+                user_metadata: {
+                  full_name: athlete.fullName ?? null,
+                },
+              });
+
+              if (userCreateError) {
+                console.error("[Infinity Pay] create user failed", userCreateError);
+                return new Response(
+                  JSON.stringify({ error: userCreateError.message || "Falha ao criar usuário." }),
+                  {
+                    status: 400,
+                    headers: { ...buildCorsHeaders(), "content-type": "application/json" },
+                  },
+                );
+              }
+
+              effectiveUserId = userCreateData.user?.id ?? null;
+              if (!effectiveUserId) {
+                return new Response(
+                  JSON.stringify({ error: "Falha ao criar usuário." }),
+                  {
+                    status: 500,
+                    headers: { ...buildCorsHeaders(), "content-type": "application/json" },
+                  },
+                );
+              }
+            }
+
+            userId = effectiveUserId;
           }
 
           const baseUrl = resolveBaseUrl(request);
-          const callbackUrl = new URL("/.netlify/functions/mercadopago-webhook", baseUrl).toString();
           const successUrl = new URL("/checkout?status=success", baseUrl).toString();
           const failureUrl = new URL("/checkout?status=failure", baseUrl).toString();
           const pendingUrl = new URL("/checkout?status=pending", baseUrl).toString();
-
-          if (!successUrl) {
-            throw new Error("Invalid Mercado Pago success URL");
-          }
-
-          const supabaseAdmin = createSupabaseAdminClient();
 
           let price = 0;
           let registration: any = null;
@@ -168,14 +243,14 @@ export const Route = createFileRoute("/api/public/create-preference")({
                 team_name: athlete.teamName || null,
                 athlete_snapshot: athlete,
                 payment_status: "pending",
-                payment_method: "mercadopago",
+                payment_method: "infinitypay",
                 created_at: createdAt,
                 updated_at: new Date().toISOString(),
               })
               .select("id");
 
             if (registrationError || !newRegistration) {
-              console.error("[Mercado Pago] registration insert failed", registrationError);
+              console.error("[Infinity Pay] registration insert failed", registrationError);
               throw registrationError || new Error("Falha ao criar inscrição");
             }
 
@@ -198,55 +273,27 @@ export const Route = createFileRoute("/api/public/create-preference")({
                 updated_at: new Date().toISOString(),
               });
             } catch (inscriptionError) {
-              console.warn("[Mercado Pago] inscricoes insert skipped", inscriptionError);
+              console.warn("[Infinity Pay] inscricoes insert skipped", inscriptionError);
             }
           }
 
-          const { MercadoPagoConfig, Preference } = await import("mercadopago");
-          const client = new MercadoPagoConfig({ accessToken: process.env.MERCADO_PAGO_ACCESS_TOKEN });
-          const preference = new Preference(client);
-          const payerEmail = preferenceAthlete.email ? String(preferenceAthlete.email) : undefined;
-          const payerName = String(preferenceAthlete.fullName ?? "Atleta");
-          const payer = payerEmail
-            ? {
-                name: payerName.split(" ")[0] || "Atleta",
-                surname: payerName.split(" ").slice(1).join(" ") || "Extreme Race",
-                email: payerEmail,
-              }
-            : undefined;
+          const payloadCheckoutLink = payload.checkoutLink ? String(payload.checkoutLink).trim() : null;
+          const isValidPayloadLink = payloadCheckoutLink
+            ? Object.values(CHECKOUT_LINKS).includes(payloadCheckoutLink as any)
+            : false;
 
-          const response = await preference.create({
-            body: {
-              items: [
-                {
-                  title: `Inscrição Extreme Race - ${category.name}`,
-                  quantity: 1,
-                  unit_price: price,
-                  currency_id: "BRL",
-                },
-              ],
-              ...(payer ? { payer } : {}),
-              external_reference: registration.id,
-              auto_return: "approved",
-              back_urls: {
-                success: successUrl,
-                failure: failureUrl,
-                pending: pendingUrl,
-              },
-              notification_url: callbackUrl,
-              metadata: {
-                registration_id: registration.id,
-                category_id: category.id,
-                event: "extreme-race",
-              },
-              statement_descriptor: "EXTREME RACE",
-            },
-          });
+          const checkoutModalidade = resolveCheckoutModalidade(payload.modalidade, category.id);
+          let checkoutLink = isValidPayloadLink
+            ? payloadCheckoutLink
+            : CHECKOUT_LINKS[checkoutModalidade] ?? getCheckoutLinkByCategoryId(category.id);
+
+          if (!checkoutLink) {
+            throw new Error("Nenhum link de checkout disponível para esta categoria.");
+          }
 
           return new Response(
             JSON.stringify({
-              init_point: response.init_point,
-              preferenceId: response.id,
+              checkoutLink,
               registrationId: registration.id,
               price,
               priceLabel: formatPrice(price),
@@ -257,7 +304,7 @@ export const Route = createFileRoute("/api/public/create-preference")({
             },
           );
         } catch (error) {
-          console.error("[Mercado Pago] create preference failed", error);
+          console.error("[Infinity Pay] create preference failed", error);
           const message =
             error instanceof Error
               ? error.message
@@ -267,14 +314,13 @@ export const Route = createFileRoute("/api/public/create-preference")({
 
           const responsePayload: any = {
             error: import.meta.env.DEV
-              ? `Erro ao criar checkout do Mercado Pago: ${message}`
-              : "Erro ao criar checkout do Mercado Pago",
+              ? `Erro ao criar link de checkout do Infinity Pay: ${message}`
+              : "Erro ao criar link de checkout",
           };
 
           if (import.meta.env.DEV) {
             responsePayload.details = {
               message,
-              mercadoPagoToken: process.env.MERCADO_PAGO_ACCESS_TOKEN ? "SET" : "MISSING",
               supabaseUrl: process.env.SUPABASE_URL ? "SET" : "MISSING",
               supabaseServiceKey: process.env.SUPABASE_SERVICE_ROLE_KEY ? "SET" : "MISSING",
             };
