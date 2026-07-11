@@ -154,8 +154,18 @@ function CheckoutPage() {
         }
 
         if (!user) {
-          const { data: sessionData } = await supabase.auth.getSession();
-          user = sessionData.session?.user ?? null;
+          // Try to sign in immediately in case confirmation is disabled
+          const { error: signInError } = await supabase.auth.signInWithPassword({
+            email: data.athlete.email || "",
+            password: data.athlete.password,
+          });
+          if (signInError) {
+            const { data: sessionData } = await supabase.auth.getSession();
+            user = sessionData.session?.user ?? null;
+          } else {
+            const { data: newSessionData } = await supabase.auth.getSession();
+            user = newSessionData.session?.user ?? null;
+          }
         }
 
         if (!user) {

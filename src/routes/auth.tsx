@@ -47,7 +47,7 @@ function AuthPage() {
     setLoading(true);
     try {
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
+        const { error, data } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -56,7 +56,19 @@ function AuthPage() {
           },
         });
         if (error) throw error;
-        setInfo("Conta criada! Verifique seu e-mail para confirmar e entre em seguida.");
+
+        // Try to sign in immediately in case email confirmation is not required
+        try {
+          const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+          if (signInError) {
+            // If sign in fails (e.g., still requires confirmation), inform the user
+            setInfo("Conta criada. Verifique seu e-mail se for necessário para ativar a conta.");
+          } else {
+            navigate({ to: redirect ?? "/minha-conta" });
+          }
+        } catch (e) {
+          setInfo("Conta criada. Verifique seu e-mail se for necessário para ativar a conta.");
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;

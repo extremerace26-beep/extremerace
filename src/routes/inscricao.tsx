@@ -250,8 +250,11 @@ const duoParticipantSchema = z.object({
   }, "Idade mínima 5 anos"),
 });
 
-const passwordAndShirtSchema = z.object({
+const passwordSchema = z.object({
   password: z.string().min(6, "Senha com no mínimo 6 caracteres"),
+});
+
+const passwordAndShirtSchema = passwordSchema.extend({
   shirtSize: z.enum(["P", "M", "G", "GG", "XGG", "Sem camiseta"] as const),
 });
 
@@ -284,7 +287,11 @@ function InscricaoPage() {
 
   function handleSelectCategory(id: CategoryId) {
     setSelected(id);
-    setForm((f) => ({ ...f, categoria: id }));
+    setForm((f) => ({
+      ...f,
+      categoria: id,
+      ...(id === "economica" ? { shirtSize: undefined, participant2ShirtSize: undefined } : {}),
+    }));
     setErrors((prev) => {
       const next = { ...prev };
       delete next.categoria;
@@ -316,7 +323,11 @@ function InscricaoPage() {
 
   function handleSubmitShirt(e: React.FormEvent) {
     e.preventDefault();
-    const validationSchema = isDuo ? duoPasswordAndShirtSchema : passwordAndShirtSchema;
+    const validationSchema = isDuo
+      ? duoPasswordAndShirtSchema
+      : cat?.id === "economica"
+      ? passwordSchema
+      : passwordAndShirtSchema;
     const parsed = validationSchema.safeParse(form);
     if (!parsed.success) {
       const fieldErrors: Record<string, string> = {};
@@ -337,9 +348,15 @@ function InscricaoPage() {
     setPaymentError(null);
 
     try {
+      const athletePayload = {
+        ...form,
+        ...(cat.id === "economica"
+          ? { shirtSize: undefined, participant2ShirtSize: undefined }
+          : {}),
+      };
       const payload = {
         category: cat,
-        athlete: form,
+        athlete: athletePayload,
         modalidade: startModalidade,
         createdAt: new Date().toISOString(),
       };
