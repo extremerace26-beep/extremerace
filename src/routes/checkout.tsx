@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.png";
-import { getCheckoutLinkByCategoryId } from "@/lib/checkout-links";
+import { getCheckoutLinkByCategoryId, CHECKOUT_LINKS } from "@/lib/checkout-links";
 
 type Payload = {
   category: { id: string; name: string; price: number; priceLabel: string };
@@ -167,7 +167,18 @@ function CheckoutPage() {
         }
       }
 
-      const checkoutLink = getCheckoutLinkByCategoryId(data.category.id);
+      let checkoutLink: string | null = null;
+      // Prefer modality-provided checkout (set at start of flow), fall back to category mapping
+      // @ts-ignore - modalidade may be present in stored payload
+      if ((data as any).modalidade) {
+        // @ts-ignore
+        checkoutLink = CHECKOUT_LINKS[(data as any).modalidade] ?? null;
+      }
+
+      if (!checkoutLink) {
+        checkoutLink = getCheckoutLinkByCategoryId(data.category.id);
+      }
+
       if (checkoutLink) {
         window.open(checkoutLink, "_blank", "noopener,noreferrer");
       } else {

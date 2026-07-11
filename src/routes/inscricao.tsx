@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { z } from "zod";
 import logo from "@/assets/logo.png";
-import { getCheckoutLinkByCategoryId } from "@/lib/checkout-links";
+import { getCheckoutLinkByCategoryId, CHECKOUT_LINKS } from "@/lib/checkout-links";
 
 type ShirtSize = "P" | "M" | "G" | "GG" | "XGG" | "Sem camiseta";
 
@@ -269,7 +269,8 @@ function InscricaoPage() {
   const initialCategory = categoria ?? (modalidade === "grupo" ? "grupo" : null);
   const [step, setStep] = useState<1 | 2 | 3 | 4>(initialCategory ? 2 : 1);
   const [selected, setSelected] = useState<CategoryId | null>(initialCategory);
-  const [form, setForm] = useState<Partial<AthleteData> & { categoria?: CategoryId }>({ categoria: initialCategory ?? undefined });
+  const [form, setForm] = useState<Partial<AthleteData> & { categoria?: CategoryId; modalidade?: Modalidade }>({ categoria: initialCategory ?? undefined, modalidade: modalidade ?? undefined });
+  const [startModalidade] = useState<Modalidade | undefined>(modalidade ?? undefined);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
@@ -339,12 +340,19 @@ function InscricaoPage() {
       const payload = {
         category: cat,
         athlete: form,
+        modalidade: startModalidade,
         createdAt: new Date().toISOString(),
       };
 
       if (typeof window !== "undefined") {
         sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-        const checkoutLink = getCheckoutLinkByCategoryId(cat.id);
+        let checkoutLink: string | null = null;
+        if (startModalidade) {
+          checkoutLink = CHECKOUT_LINKS[startModalidade] ?? null;
+        } else {
+          checkoutLink = getCheckoutLinkByCategoryId(cat.id);
+        }
+
         if (checkoutLink) {
           window.open(checkoutLink, "_blank", "noopener,noreferrer");
           return;
@@ -725,22 +733,24 @@ function InscricaoPage() {
                     minLength={6}
                   />
                 </Field>
-                <Field label="Tamanho da camiseta" error={errors.shirtSize} className="md:col-span-2">
-                  <select
-                    value={form.shirtSize ?? ""}
-                    onChange={(e) => set("shirtSize", e.target.value as AthleteData["shirtSize"])}
-                    className={inputCls}
-                  >
-                    <option value="">Selecione</option>
-                    <option value="P">P</option>
-                    <option value="M">M</option>
-                    <option value="G">G</option>
-                    <option value="GG">GG</option>
-                    <option value="XGG">XGG</option>
-                    <option value="Sem camiseta">Sem camiseta</option>
-                  </select>
-                </Field>
-                {isDuo && (
+                {cat && cat.id !== "economica" && (
+                  <Field label="Tamanho da camiseta" error={errors.shirtSize} className="md:col-span-2">
+                    <select
+                      value={form.shirtSize ?? ""}
+                      onChange={(e) => set("shirtSize", e.target.value as AthleteData["shirtSize"])}
+                      className={inputCls}
+                    >
+                      <option value="">Selecione</option>
+                      <option value="P">P</option>
+                      <option value="M">M</option>
+                      <option value="G">G</option>
+                      <option value="GG">GG</option>
+                      <option value="XGG">XGG</option>
+                      <option value="Sem camiseta">Sem camiseta</option>
+                    </select>
+                  </Field>
+                )}
+                {isDuo && cat && cat.id !== "economica" && (
                   <Field label="Tamanho da camiseta do segundo atleta" error={errors.participant2ShirtSize} className="md:col-span-2">
                     <select
                       value={form.participant2ShirtSize ?? ""}
@@ -810,11 +820,11 @@ function InscricaoPage() {
                 <SummaryItem label="Data nasc 1" value={form.birthDate} />
                 <SummaryItem label="Grupo" value={form.group} />
                 <SummaryItem label="WhatsApp" value={form.phone} />
-                <SummaryItem label="Camiseta 1" value={form.shirtSize} />
+                {cat && cat.id !== "economica" && <SummaryItem label="Camiseta 1" value={form.shirtSize} />}
                 {isDuo && <SummaryItem label="Atleta 2" value={form.participant2FullName} />}
                 {isDuo && <SummaryItem label="CPF 2" value={form.participant2Cpf} />}
                 {isDuo && <SummaryItem label="Data nasc 2" value={form.participant2BirthDate} />}
-                {isDuo && <SummaryItem label="Camiseta 2" value={form.participant2ShirtSize} />}
+                {isDuo && cat && cat.id !== "economica" && <SummaryItem label="Camiseta 2" value={form.participant2ShirtSize} />}
               </dl>
             </div>
 
