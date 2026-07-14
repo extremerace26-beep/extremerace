@@ -123,16 +123,15 @@ function CheckoutPage() {
     setProcessing(true);
     setError(null);
 
-    let paymentWindow: Window | null = window.open("", "_blank");
-    if (paymentWindow) {
-      const html = `<!doctype html><html><head><title>Carregando pagamento...</title><style>body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#080808;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;text-align:center}strong{display:block;margin-bottom:1rem;font-size:1.4rem}p{opacity:.8;max-width:320px;margin:0 auto;}</style></head><body><strong>Aguarde...</strong><p>Seu checkout será carregado em outra guia automaticamente.</p><script>window.addEventListener('message', (event) => { if (event.origin === window.location.origin && event.data?.checkoutLink) { window.location.href = event.data.checkoutLink; } });</script></body></html>`;
-      try {
-        paymentWindow.document.write(html);
-        paymentWindow.document.close();
-        paymentWindow.document.title = "Carregando checkout";
-      } catch {
-        // Ignore write failures.
-      }
+    const initialCheckoutLink = data.checkoutLink;
+    const redirectKey = `extreme-race:checkout-redirect-${Date.now()}`;
+    const redirectUrl = new URL("checkout-redirect.html", window.location.href).toString() + `?key=${encodeURIComponent(redirectKey)}`;
+    let paymentWindow: Window | null = null;
+
+    if (initialCheckoutLink) {
+      paymentWindow = window.open(initialCheckoutLink, "_blank");
+    } else {
+      paymentWindow = window.open(redirectUrl, "_blank");
     }
 
     const { data: userRes } = await supabase.auth.getUser();
@@ -205,7 +204,7 @@ function CheckoutPage() {
 
       if (paymentWindow && !paymentWindow.closed) {
         try {
-          paymentWindow.postMessage({ checkoutLink }, window.location.origin);
+          localStorage.setItem(redirectKey, checkoutLink);
           paymentWindow.focus();
         } catch {
           window.open(checkoutLink, "_blank") || (window.location.href = checkoutLink);
