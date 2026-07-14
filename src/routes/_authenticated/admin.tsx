@@ -120,12 +120,12 @@ function AdminPage() {
   }
 
   async function deleteRegistration(id: string, name: string) {
-    const confirmDelete = confirm(
-      `Tem certeza que deseja excluir a inscrição de ${name}? Esta ação não pode ser desfeita.`
+    const confirmDelete = window.confirm(
+      `Atenção! Você está prestes a excluir permanentemente a inscrição de ${name}.\n\nDeseja confirmar esta exclusão?`
     );
     if (!confirmDelete) return;
 
-    const { error } = await supabase.from("registrations").delete().eq("id", id);
+    const { error } = await supabase.rpc("admin_delete_registration", { _registration_id: id });
     if (error) {
       alert("Erro ao excluir: " + error.message);
       return;

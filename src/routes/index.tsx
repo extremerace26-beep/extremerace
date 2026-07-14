@@ -58,7 +58,7 @@ const schedule = [
 const faqs = [
   {
     q: "Como funciona a Extreme Race?",
-    a: "São 8 km de percurso com 30 obstáculos espalhados pela rota. Você escolhe a categoria, larga em onda e tem que cruzar a linha de chegada — não importa como.",
+    a: "São 5KM de percurso com 30 obstáculos espalhados pela rota. Você escolhe a categoria, larga em onda e tem que cruzar a linha de chegada — não importa como.",
   },
   {
     q: "Posso trocar a titularidade da inscrição?",
@@ -70,7 +70,7 @@ const faqs = [
   },
   {
     q: "Tem reembolso se eu desistir?",
-    a: "A inscrição pode ser cancelada com reembolso parcial até 30 dias antes do evento. Após esse prazo, é possível transferir a vaga.",
+    a: "Não haverá reembolso de valores; os atletas podem vender ou transferir a inscrição para outra pessoa.",
   },
   {
     q: "Como funciona o check-in no dia?",
@@ -701,19 +701,39 @@ function ExtremeRace() {
           <div className="grid md:grid-cols-3 gap-6">
             {[
               {
-                quote: "Treinei 6 meses pensando que estava pronto. A Extreme Race me ensinou que sempre dá pra ir mais longe.",
-                name: "Rafael M.",
-                role: "Finisher Elite 2025",
+                quote: "Participar do Extreme Race foi uma das maiores loucuras que já fiz… é sobre se sentir vivo e vencer, principalmente sua mente!",
+                name: "ANA CRISTINA",
+                role: "Participante",
               },
               {
-                quote: "Fui com a galera do box. Saímos com lama nos olhos, medalha no peito e história pra contar pelo ano todo.",
-                name: "Juliana S.",
-                role: "Capitã de Equipe",
+                quote: "Depois de ir uma vez sempre vai querer ir de novo.",
+                name: "MARGARETHE SOUSA",
+                role: "Participante",
               },
               {
-                quote: "Sou corredor de rua, achei que ia ser fácil. Não foi. Foi a coisa mais difícil e a melhor que já fiz.",
-                name: "André L.",
-                role: "Finisher Open",
+                quote: "Uma prova sensacional! Desafio de seus limites físicos e emocionais! adrenalina a mil e diversão garantida.",
+                name: "CHAGAS MELO",
+                role: "Participante",
+              },
+              {
+                quote: "Essa não vai ser a única vez que vai querer ir. Mas vá com força e foco total! É um espetáculo.",
+                name: "MADALENA GOMES",
+                role: "Participante",
+              },
+              {
+                quote: "É uma experiência incrível. Quem vai a primeira vez nunca esquece.",
+                name: "SKARLEY BONIFACIO",
+                role: "Participante",
+              },
+              {
+                quote: "A linha de chegada desta prova é diferente, melhor experiência.",
+                name: "BIANCA MILLE",
+                role: "Participante",
+              },
+              {
+                quote: "Tem que ser louco pelo menos uma vez na vida e viver essa experiência.",
+                name: "VANESSA FERRO",
+                role: "Participante",
               },
             ].map((t) => (
               <div key={t.name} className="border border-border p-8 bg-surface/30 flex flex-col">

@@ -269,7 +269,7 @@ type AthleteData = z.infer<typeof athleteSchema>;const STORAGE_KEY = "extreme-ra
 function InscricaoPage() {
   const navigate = useNavigate();
   const { categoria, modalidade } = Route.useSearch();
-  const initialCategory = categoria ?? (modalidade === "grupo" ? "grupo" : null);
+  const initialCategory = categoria ?? null;
   const [step, setStep] = useState<1 | 2 | 3 | 4>(initialCategory ? 2 : 1);
   const [selected, setSelected] = useState<CategoryId | null>(initialCategory);
   const [startModalidade] = useState<Modalidade | undefined>(modalidade ?? undefined);
@@ -312,15 +312,8 @@ function InscricaoPage() {
     setForm((f) => ({
       ...f,
       modalidade,
-      ...(modalidade === "grupo" ? { categoria: "grupo" } : {}),
       ...(modalidade === "economica" ? { shirtSize: undefined, participant2ShirtSize: undefined } : {}),
     }));
-
-    if (modalidade === "grupo") {
-      setSelected("grupo");
-      setStep(2);
-      if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
-    }
   }
 
   function handleSubmitData(e: React.FormEvent) {
