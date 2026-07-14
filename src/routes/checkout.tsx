@@ -123,6 +123,18 @@ function CheckoutPage() {
     setProcessing(true);
     setError(null);
 
+    let paymentWindow: Window | null = window.open("", "_blank");
+    if (paymentWindow) {
+      const html = `<!doctype html><html><head><title>Carregando pagamento...</title><style>body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#080808;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;text-align:center}strong{display:block;margin-bottom:1rem;font-size:1.4rem}p{opacity:.8;max-width:320px;margin:0 auto;}</style></head><body><strong>Aguarde...</strong><p>Seu checkout será carregado em outra guia automaticamente.</p><script>window.addEventListener('message', (event) => { if (event.origin === window.location.origin && event.data?.checkoutLink) { window.location.href = event.data.checkoutLink; } });</script></body></html>`;
+      try {
+        paymentWindow.document.write(html);
+        paymentWindow.document.close();
+        paymentWindow.document.title = "Carregando checkout";
+      } catch {
+        // Ignore write failures.
+      }
+    }
+
     const { data: userRes } = await supabase.auth.getUser();
     let user = userRes.user;
 
@@ -130,6 +142,8 @@ function CheckoutPage() {
       if (!user) {
         if (!data.athlete.password) {
           setError("Informe uma senha para criar sua conta e continuar.");
+          setProcessing(false);
+          if (paymentWindow && !paymentWindow.closed) paymentWindow.close();
           return;
         }
 
@@ -146,6 +160,8 @@ function CheckoutPage() {
 
       if (!user && !data.athlete.password) {
         setError("Usuário não autenticado. Faça login ou informe uma senha para criar a conta automaticamente.");
+        setProcessing(false);
+        if (paymentWindow && !paymentWindow.closed) paymentWindow.close();
         return;
       }
 
@@ -187,10 +203,22 @@ function CheckoutPage() {
         setData((current) => (current ? { ...current, registrationId: result.registrationId } : current));
       }
 
-      window.location.href = checkoutLink;
+      if (paymentWindow && !paymentWindow.closed) {
+        try {
+          paymentWindow.postMessage({ checkoutLink }, window.location.origin);
+          paymentWindow.focus();
+        } catch {
+          window.open(checkoutLink, "_blank") || (window.location.href = checkoutLink);
+        }
+      } else {
+        window.open(checkoutLink, "_blank") || (window.location.href = checkoutLink);
+      }
     } catch (error) {
       console.error("[Checkout] preference creation failed", error);
       setError(error instanceof Error ? error.message : "Erro ao iniciar o pagamento.");
+      if (paymentWindow && !paymentWindow.closed) {
+        paymentWindow.close();
+      }
     } finally {
       setProcessing(false);
     }
