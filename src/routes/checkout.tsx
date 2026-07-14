@@ -123,6 +123,9 @@ function CheckoutPage() {
     setProcessing(true);
     setError(null);
 
+    const popup = window.open("", "_blank");
+    const shouldFallbackNavigation = popup === null;
+
     const { data: userRes } = await supabase.auth.getUser();
     let user = userRes.user;
 
@@ -130,7 +133,6 @@ function CheckoutPage() {
       if (!user) {
         if (!data.athlete.password) {
           setError("Informe uma senha para criar sua conta e continuar.");
-          setProcessing(false);
           return;
         }
 
@@ -147,7 +149,6 @@ function CheckoutPage() {
 
       if (!user && !data.athlete.password) {
         setError("Usuário não autenticado. Faça login ou informe uma senha para criar a conta automaticamente.");
-        setProcessing(false);
         return;
       }
 
@@ -189,10 +190,17 @@ function CheckoutPage() {
         setData((current) => (current ? { ...current, registrationId: result.registrationId } : current));
       }
 
-      window.open(checkoutLink, "_blank", "noopener,noreferrer");
+      if (popup && !popup.closed) {
+        popup.location.href = checkoutLink;
+      } else if (shouldFallbackNavigation) {
+        window.location.href = checkoutLink;
+      }
     } catch (error) {
       console.error("[Checkout] preference creation failed", error);
       setError(error instanceof Error ? error.message : "Erro ao iniciar o pagamento.");
+      if (popup && !popup.closed) {
+        popup.close();
+      }
     } finally {
       setProcessing(false);
     }
