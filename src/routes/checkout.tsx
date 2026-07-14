@@ -123,8 +123,17 @@ function CheckoutPage() {
     setProcessing(true);
     setError(null);
 
-    const popup = window.open("", "_blank");
+    const popup = window.open("about:blank", "_blank", "noopener,noreferrer");
     const shouldFallbackNavigation = popup === null;
+
+    if (popup && !popup.closed) {
+      try {
+        popup.document.write("<html><body style='margin:0;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;background:#111;color:#fff;'><div style='text-align:center;max-width:320px;'><div style='font-size:24px;font-weight:800;margin-bottom:16px;'>Aguarde...</div><div style='font-size:14px;line-height:1.6;'>Seu pagamento será carregado em breve.</div></div></body></html>");
+        popup.document.title = "Aguarde pagamento";
+      } catch {
+        // Ignore cross-window write failures.
+      }
+    }
 
     const { data: userRes } = await supabase.auth.getUser();
     let user = userRes.user;
@@ -181,7 +190,7 @@ function CheckoutPage() {
       }
 
       const checkoutLink =
-        result.checkoutLink || result.checkout_link || result.checkoutUrl || result.checkoutURL || null;
+        result.checkoutLink || result.checkout_link || result.checkoutUrl || result.checkoutURL || data.checkoutLink || null;
       if (!checkoutLink) {
         throw new Error("Link de checkout não retornado pelo servidor.");
       }
@@ -191,8 +200,12 @@ function CheckoutPage() {
       }
 
       if (popup && !popup.closed) {
-        popup.location.href = checkoutLink;
-      } else if (shouldFallbackNavigation) {
+        try {
+          popup.location.href = checkoutLink;
+        } catch {
+          window.location.href = checkoutLink;
+        }
+      } else {
         window.location.href = checkoutLink;
       }
     } catch (error) {
