@@ -74,42 +74,47 @@ function CheckoutPage() {
     }
 
     (async () => {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const user = sessionData.session?.user;
-      setIsAuthenticated(!!user);
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const user = sessionData.session?.user;
+        setIsAuthenticated(!!user);
 
-      if (!user && !registrationId && !raw) {
-        navigate({ to: "/auth", search: { redirect: "/checkout" } });
-        return;
-      }
-
-      if (registrationId) {
-        const query = supabase.from("registrations").select("*").eq("id", registrationId);
-        if (user) {
-          query.eq("user_id", user.id);
-        }
-
-        const { data: registration, error: registrationError } = await query.maybeSingle();
-
-        if (registrationError || !registration) {
-          navigate({ to: "/inscricao" });
+        if (!user && !registrationId && !raw) {
+          navigate({ to: "/auth", search: { redirect: "/checkout" } });
           return;
         }
 
-        setData({
-          category: {
-            id: registration.category_id,
-            name: registration.category_name,
-            price: (registration.price_cents || 0) / 100,
-            priceLabel: `R$ ${((registration.price_cents || 0) / 100).toFixed(2)}`,
-          },
-          athlete: (registration.athlete_snapshot as Payload["athlete"]) || {},
-          createdAt: registration.created_at || new Date().toISOString(),
-          registrationId: registration.id,
-        });
-      }
+        if (registrationId) {
+          const query = supabase.from("registrations").select("*").eq("id", registrationId);
+          if (user) {
+            query.eq("user_id", user.id);
+          }
 
-      setAuthChecked(true);
+          const { data: registration, error: registrationError } = await query.maybeSingle();
+
+          if (registrationError || !registration) {
+            navigate({ to: "/inscricao" });
+            return;
+          }
+
+          setData({
+            category: {
+              id: registration.category_id,
+              name: registration.category_name,
+              price: (registration.price_cents || 0) / 100,
+              priceLabel: `R$ ${((registration.price_cents || 0) / 100).toFixed(2)}`,
+            },
+            athlete: (registration.athlete_snapshot as Payload["athlete"]) || {},
+            createdAt: registration.created_at || new Date().toISOString(),
+            registrationId: registration.id,
+          });
+        }
+      } catch (error) {
+        console.error("[Checkout] auth session failed", error);
+        setError("Não foi possível verificar sua sessão no momento. Tente novamente em alguns segundos.");
+      } finally {
+        setAuthChecked(true);
+      }
     })();
   }, [navigate]);
 
