@@ -10,6 +10,19 @@ const searchSchema = z.object({
   mode: z.enum(["signin", "signup"]).optional(),
 });
 
+function normalizeRedirectTarget(value: string | undefined) {
+  if (!value) return undefined;
+  try {
+    const url = new URL(value, typeof window === "undefined" ? "http://localhost" : window.location.origin);
+    if (typeof window !== "undefined" && url.origin !== window.location.origin) {
+      return undefined;
+    }
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return undefined;
+  }
+}
+
 export const Route = createFileRoute("/auth")({
   ssr: false,
   validateSearch: searchSchema,
@@ -25,7 +38,7 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const navigate = useNavigate();
   const { redirect, returnTo, mode: initialMode } = Route.useSearch();
-  const redirectTo = redirect ?? returnTo;
+  const redirectTo = normalizeRedirectTarget(redirect ?? returnTo);
   const [mode, setMode] = useState<"signin" | "signup">(
     initialMode ?? (redirectTo === "/checkout" ? "signup" : "signin")
   );

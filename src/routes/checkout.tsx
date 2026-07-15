@@ -123,16 +123,10 @@ function CheckoutPage() {
     setProcessing(true);
     setError(null);
 
-    const initialCheckoutLink = data.checkoutLink;
     const redirectKey = `extreme-race:checkout-redirect-${Date.now()}`;
-    const redirectUrl = new URL("checkout-redirect.html", window.location.href).toString() + `?key=${encodeURIComponent(redirectKey)}`;
-    let paymentWindow: Window | null = null;
-
-    if (initialCheckoutLink) {
-      paymentWindow = window.open(initialCheckoutLink, "_blank");
-    } else {
-      paymentWindow = window.open(redirectUrl, "_blank");
-    }
+    const placeholderHtml = `<!doctype html><html><head><meta charset="utf-8"/><title>Carregando pagamento...</title><style>body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#080808;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;text-align:center}strong{display:block;margin-bottom:1rem;font-size:1.4rem}p{opacity:.8;max-width:320px;margin:0 auto;}</style></head><body><strong>Aguarde...</strong><p>Seu pagamento será carregado em breve.</p><script>const key=${JSON.stringify(redirectKey)};const interval=setInterval(()=>{const link=localStorage.getItem(key);if(link){localStorage.removeItem(key);clearInterval(interval);window.location.href=link;}},200);window.addEventListener('beforeunload',()=>clearInterval(interval));</script></body></html>`;
+    const popupUrl = `data:text/html;charset=utf-8,${encodeURIComponent(placeholderHtml)}`;
+    let paymentWindow: Window | null = window.open(popupUrl, "_blank");
 
     const { data: userRes } = await supabase.auth.getUser();
     let user = userRes.user;
@@ -202,9 +196,15 @@ function CheckoutPage() {
         setData((current) => (current ? { ...current, registrationId: result.registrationId } : current));
       }
 
+      try {
+        localStorage.setItem(redirectKey, checkoutLink);
+      } catch {
+        // ignore localStorage failures in privacy mode
+      }
+
       if (paymentWindow && !paymentWindow.closed) {
         try {
-          localStorage.setItem(redirectKey, checkoutLink);
+          paymentWindow.location.href = checkoutLink;
           paymentWindow.focus();
         } catch {
           window.open(checkoutLink, "_blank") || (window.location.href = checkoutLink);

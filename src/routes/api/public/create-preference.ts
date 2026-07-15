@@ -92,8 +92,9 @@ function resolveBaseUrl(request: Request) {
 }
 
 function createSupabaseAdminClient() {
-  const SUPABASE_URL = process.env.SUPABASE_URL;
-  const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const SUPABASE_SERVICE_ROLE_KEY =
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     throw new Error("Missing Supabase environment variables");
@@ -233,7 +234,7 @@ export const Route = createFileRoute("/api/public/create-preference")({
             category.name = existingRegistration.category_name || category.name;
           } else {
             price = getRegistrationPrice(new Date());
-            const { data: newRegistration, error: registrationError } = await supabaseAdmin
+            const { data: newRegistrationData, error: registrationError } = await supabaseAdmin
               .from("registrations")
               .insert({
                 user_id: userId,
@@ -247,14 +248,15 @@ export const Route = createFileRoute("/api/public/create-preference")({
                 created_at: createdAt,
                 updated_at: new Date().toISOString(),
               })
-              .select("id");
+              .select("id")
+              .single();
 
-            if (registrationError || !newRegistration) {
+            if (registrationError || !newRegistrationData) {
               console.error("[Infinity Pay] registration insert failed", registrationError);
               throw registrationError || new Error("Falha ao criar inscrição");
             }
 
-            registration = newRegistration;
+            registration = newRegistrationData;
             await ensureProfile(supabaseAdmin, userId, athlete);
 
             try {
