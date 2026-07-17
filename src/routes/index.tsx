@@ -10,6 +10,22 @@ import obstacleRastejoSangrento from "@/assets/obstacle-rastejo-sangrento.jpg";
 import obstacleParedeContencao from "@/assets/obstacle-parede-contencao.jpg";
 import obstacleParedeChoro from "@/assets/obstacle-parede-choro.jpg";
 import obstacleParedePneus from "@/assets/obstacle-parede-pneus.jpg";
+import galleryImage1 from "@/assets/gallery-1.jpg";
+import galleryImage2 from "@/assets/gallery-2.png";
+import galleryImage3 from "@/assets/gallery-3.jpg";
+import galleryImage4 from "@/assets/gallery-4.png";
+import galleryImage5 from "@/assets/gallery-5.jpg";
+import galleryImage6 from "@/assets/gallery-6.jpg";
+import galleryImage7 from "@/assets/gallery-7.jpg";
+import galleryImage8 from "@/assets/gallery-8.jpg";
+import galleryImage9 from "@/assets/gallery-9.jpg";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselPrevious,
+  CarouselNext,
+} from "@/components/ui/carousel";
 
 export const Route = createFileRoute("/")({
   component: ExtremeRace,
@@ -688,11 +704,60 @@ function ExtremeRace() {
         </div>
       </section>
 
+      {/* GALLERY */}
+      <section className="py-24 md:py-32 bg-surface/50 border-y border-border">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="mb-16 text-center">
+            <span className="text-brand font-mono text-xs tracking-[0.3em] uppercase">[ Section_06 ]</span>
+            <h2 className="font-display text-5xl md:text-7xl font-black uppercase leading-none tracking-tighter mt-3">
+              Galeria <span className="text-brand italic">do evento</span>
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto mt-4">
+              Veja os momentos mais intensos da prova, com participantes superando cada obstáculo até a linha de chegada.
+            </p>
+          </div>
+
+          <div className="relative">
+            <Carousel opts={{ loop: true }}>
+              <CarouselContent className="flex gap-4 pb-6">
+                {[
+                  galleryImage1,
+                  galleryImage2,
+                  galleryImage3,
+                  galleryImage4,
+                  galleryImage5,
+                  galleryImage6,
+                  galleryImage7,
+                  galleryImage8,
+                  galleryImage9,
+                ].map((image, index) => (
+                  <CarouselItem key={index} className="min-w-[80%] md:min-w-[50%] lg:min-w-[33%]">
+                    <div className="overflow-hidden rounded-3xl border border-border bg-background shadow-lg">
+                      <img
+                        src={image}
+                        alt={`Extreme Race gallery ${index + 1}`}
+                        width={800}
+                        height={1000}
+                        loading="lazy"
+                        className="w-full aspect-[4/5] object-cover transition-transform duration-500 hover:scale-105"
+                      />
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+
+              <CarouselPrevious className="hidden md:block" />
+              <CarouselNext className="hidden md:block" />
+            </Carousel>
+          </div>
+        </div>
+      </section>
+
       {/* TESTIMONIALS */}
       <section className="py-24 md:py-32 bg-background">
         <div className="max-w-7xl mx-auto px-6">
           <div className="mb-16">
-            <span className="text-brand font-mono text-xs tracking-[0.3em] uppercase">[ Section_06 ]</span>
+            <span className="text-brand font-mono text-xs tracking-[0.3em] uppercase">[ Section_07 ]</span>
             <h2 className="font-display text-5xl md:text-7xl font-black uppercase leading-none tracking-tighter mt-3">
               Quem cruzou a <span className="text-brand italic">linha</span>
             </h2>

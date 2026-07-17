@@ -113,6 +113,9 @@ export const Route = createFileRoute("/api/public/create-preference")({
     handlers: {
       POST: async ({ request }) => {
         try {
+          const requestUrl = new URL(request.url);
+          const debugMode = requestUrl.searchParams.get("debug") === "1" || request.headers.get("x-debug") === "1";
+          if (debugMode) console.info("[create-preference] debug mode enabled");
           const payload = (await request.json()) as CreatePreferencePayload;
           const athlete = payload.athlete || {};
           const category = payload.category || {};
@@ -326,6 +329,16 @@ export const Route = createFileRoute("/api/public/create-preference")({
               supabaseUrl: process.env.SUPABASE_URL ? "SET" : "MISSING",
               supabaseServiceKey: process.env.SUPABASE_SERVICE_ROLE_KEY ? "SET" : "MISSING",
             };
+          }
+
+          // If debug mode requested, include non-sensitive diagnostics
+          if (typeof debugMode !== "undefined" && debugMode) {
+            const headerNames = Array.from(request.headers.keys());
+            responsePayload.details = responsePayload.details || {};
+            responsePayload.details.requestHeadersPresent = headerNames;
+            responsePayload.details.authorizationPresent = headerNames.includes("authorization");
+            responsePayload.details.supabaseUrl = process.env.SUPABASE_URL ? "SET" : "MISSING";
+            responsePayload.details.supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ? "SET" : "MISSING";
           }
 
           return new Response(JSON.stringify(responsePayload), {
