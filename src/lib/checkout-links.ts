@@ -1,8 +1,8 @@
 export const CHECKOUT_LINKS = {
-  individual: "https://loja.infinitepay.io/bwg/jcc6942-inscricao-lote-1-extreme-race",
-  grupo: "https://loja.infinitepay.io/bwg/dnr1928-extreme-race-v-lote-promocional",
-  dupla: "https://loja.infinitepay.io/bwg/vzp3441-inscricao-em-dupla",
-  economica: "https://loja.infinitepay.io/bwg/xip1831-inscricao-sem-blusa-economica",
+  individual: "https://loja.infinitepay.io/bwgbusiness/jcc6942-inscricao-lote-1-extreme-race",
+  grupo: "https://loja.infinitepay.io/bwgbusiness/dnr1928-extreme-race-v-lote-promocional",
+  dupla: "https://loja.infinitepay.io/bwgbusiness/vzp3441-inscricao-em-dupla",
+  economica: "https://loja.infinitepay.io/bwgbusiness/xip1831-inscricao-sem-blusa-economica",
 } as const;
 
 export function getCheckoutLinkByCategoryId(categoryId?: string | null) {
